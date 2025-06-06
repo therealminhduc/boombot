@@ -1,0 +1,15 @@
+/target
+
+Cargo.lock
+
+.github
+.gitignore
+
+.vscode
+.idea
+
+.DS_Store
+Thumbs.db
+
+*.log
+*.tmp
