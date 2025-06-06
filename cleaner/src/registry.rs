@@ -1,6 +1,8 @@
 use std::collections::HashMap;
-use crate::traits::UrlCleaner;
 use crate::cleaners::DomainCleaner;
+
+#[cfg(test)]
+use crate::traits::UrlCleaner;
 
 pub fn build_cleaner_registry() -> HashMap<&'static str, DomainCleaner> {
     let mut registry = HashMap::new();
