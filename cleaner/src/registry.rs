@@ -4,37 +4,10 @@ use crate::cleaners::DomainCleaner;
 #[cfg(test)]
 use crate::traits::UrlCleaner;
 
-pub fn build_cleaner_registry() -> HashMap<&'static str, DomainCleaner> {
-    let mut registry = HashMap::new();
-
-    registry.insert(
-        "instagram.com",
-        DomainCleaner::new(&["igsh"], &["utm_"]),
-    );
-
-    registry.insert(
-        "linkedin.com",
-        DomainCleaner::new(&["rcm"], &["utm_"]),
-    );
-
-    registry.insert(
-        "default",
-        DomainCleaner::new(&[], &["utm_"]),
-    );
-
-    registry
-}
-
-/// Retrieves the appropriate URL cleaner for a given host
-/// 
-/// Note: ' is to introduce a lifetime annotation.
-/// 
-/// Since I still have confusion about lifetimes, here is the function's explanation in plain English:
-/// This function receives a reference to a registry that lives at least 'a
-/// and it will return a reference to one of the values inside that registry. That returned reference cannot outlive the registry reference.
-pub fn get_cleaner_for_host<'a>(
+/// Retrieves the appropriate URL cleaner for a given host from a String-keyed registry
+pub fn get_cleaner_for_host_string<'a>(
     host: &str,
-    registry: &'a HashMap<&'static str, DomainCleaner>,
+    registry: &'a HashMap<String, DomainCleaner>,
 ) -> &'a DomainCleaner {
     for (domain, cleaner) in registry {
         if host.contains(domain) {
@@ -50,10 +23,13 @@ pub fn get_cleaner_for_host<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::load_registry_from_file;
+    use std::path::Path;
 
     #[test]
-    fn builds_registry_with_expected_domains() {
-        let registry = build_cleaner_registry();
+    fn loads_registry_from_config_file() {
+        let registry = load_registry_from_file(Path::new("src/config/domain_rules.yaml"))
+            .expect("Should load config file");
         
         assert!(registry.contains_key("instagram.com"));
         assert!(registry.contains_key("linkedin.com"));
@@ -62,20 +38,22 @@ mod tests {
 
     #[test]
     fn gets_specific_cleaner_for_domain() {
-        let registry = build_cleaner_registry();
+        let registry = load_registry_from_file(Path::new("src/config/domain_rules.yaml"))
+            .expect("Should load config file");
         
-        let instagram_cleaner = get_cleaner_for_host("www.instagram.com", &registry);
+        let instagram_cleaner = get_cleaner_for_host_string("www.instagram.com", &registry);
         assert!(instagram_cleaner.should_remove("igsh"));
         
-        let linkedin_cleaner = get_cleaner_for_host("https://www.linkedin.com", &registry);
+        let linkedin_cleaner = get_cleaner_for_host_string("https://www.linkedin.com", &registry);
         assert!(linkedin_cleaner.should_remove("rcm"));
     }
 
     #[test]
     fn falls_back_to_default_cleaner() {
-        let registry = build_cleaner_registry();
+        let registry = load_registry_from_file(Path::new("src/config/domain_rules.yaml"))
+            .expect("Should load config file");
         
-        let default_cleaner = get_cleaner_for_host("unknown.com", &registry);
+        let default_cleaner = get_cleaner_for_host_string("unknown.com", &registry);
         assert!(default_cleaner.should_remove("utm_source"));
     }
 }
