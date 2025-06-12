@@ -1,5 +1,7 @@
-use crate::registry::{build_cleaner_registry, get_cleaner_for_host};
+use crate::registry::get_cleaner_for_host_string;
+use crate::config::load_registry_from_file;
 use crate::traits::UrlCleaner;
+
 use url::Url;
 
 /// Removes tracking parameters from the URL
@@ -7,8 +9,10 @@ pub fn clean_url(input: &str) -> Result<String, url::ParseError> {
     let mut url = Url::parse(input)?;
     let host = url.host_str().unwrap_or("");
 
-    let registry = build_cleaner_registry();
-    let cleaner = get_cleaner_for_host(host, &registry);
+    // Load registry from embedded config
+    let registry = load_registry_from_file()
+        .expect("Failed to load domain rules config file");
+    let cleaner = get_cleaner_for_host_string(host, &registry);
 
     let cleaned_pairs: Vec<(String, String)> = url
         .query_pairs()
@@ -27,6 +31,8 @@ pub fn clean_url(input: &str) -> Result<String, url::ParseError> {
 
     Ok(url.to_string())
 }
+
+
 
 /* =============================== */
 

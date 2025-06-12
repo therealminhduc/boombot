@@ -1,6 +1,7 @@
 pub mod traits;
 pub mod cleaners;
 pub mod registry;
+pub mod config;
 pub mod engine;
 
 pub use engine::clean_url;

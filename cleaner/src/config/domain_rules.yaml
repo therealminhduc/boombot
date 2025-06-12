@@ -1,0 +1,21 @@
+defaults:
+  keys: []
+  starts_with: ["utm_"]
+
+domains:
+  facebook.com:
+    keys: ["fbclid"]
+
+  instagram.com:
+    keys: ["igshid", "igsh"]
+
+  linkedin.com:
+    keys: ["rcm"]
+
+  youtube.com:
+  youtu.be:
+    keys: ["si", "feature"]
+    starts_with: ["utm_", "yt_"]  # overrides defaults with additional patterns
+
+  default:
+    keys: []
