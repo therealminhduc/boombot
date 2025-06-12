@@ -5,21 +5,17 @@ defaults:
 domains:
   facebook.com:
     keys: ["fbclid"]
-    # inherits starts_with: ["utm_"] from defaults
 
   instagram.com:
     keys: ["igshid", "igsh"]
-    # inherits starts_with: ["utm_"] from defaults
 
   linkedin.com:
     keys: ["rcm"]
-    # inherits starts_with: ["utm_"] from defaults
 
-  # Example: This domain has additional starts_with patterns
   youtube.com:
+  youtu.be:
     keys: ["si", "feature"]
     starts_with: ["utm_", "yt_"]  # overrides defaults with additional patterns
 
   default:
     keys: []
-    # inherits starts_with: ["utm_"] from defaults

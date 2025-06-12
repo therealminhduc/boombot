@@ -2,7 +2,6 @@ use crate::registry::get_cleaner_for_host_string;
 use crate::config::load_registry_from_file;
 use crate::traits::UrlCleaner;
 
-use std::path::Path;
 use url::Url;
 
 /// Removes tracking parameters from the URL
@@ -10,8 +9,8 @@ pub fn clean_url(input: &str) -> Result<String, url::ParseError> {
     let mut url = Url::parse(input)?;
     let host = url.host_str().unwrap_or("");
 
-    // Load data-driven registry from config file
-    let registry = load_registry_from_file(Path::new("src/config/domain_rules.yaml"))
+    // Load registry from embedded config
+    let registry = load_registry_from_file()
         .expect("Failed to load domain rules config file");
     let cleaner = get_cleaner_for_host_string(host, &registry);
 

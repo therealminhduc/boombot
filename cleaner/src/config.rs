@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use serde::Deserialize;
-
-use std::path::Path;
 use std::error::Error;
-use std::fs;
 
 use crate::cleaners::DomainCleaner;
+
+// Embed the config file at compile time
+const DOMAIN_RULES_YAML: &str = include_str!("config/domain_rules.yaml");
 
 
 /// Configuration for a domain's URL cleaning rules
@@ -25,9 +25,9 @@ pub struct ConfigFile {
     pub domains: HashMap<String, RuleConfig>,
 }
 
-pub fn load_registry_from_file(path: &Path) -> Result<HashMap<String, DomainCleaner>, Box<dyn Error>> {
-    let yaml = fs::read_to_string(path)?;
-    let config: ConfigFile = serde_yaml::from_str(&yaml)?;
+/// Load the registry from the embedded config file
+pub fn load_registry_from_file() -> Result<HashMap<String, DomainCleaner>, Box<dyn Error>> {
+    let config: ConfigFile = serde_yaml::from_str(DOMAIN_RULES_YAML)?;
 
     let mut registry = HashMap::new();
 
@@ -53,4 +53,3 @@ pub fn load_registry_from_file(path: &Path) -> Result<HashMap<String, DomainClea
 
     Ok(registry)
 }
-

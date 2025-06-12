@@ -24,11 +24,10 @@ pub fn get_cleaner_for_host_string<'a>(
 mod tests {
     use super::*;
     use crate::config::load_registry_from_file;
-    use std::path::Path;
 
     #[test]
     fn loads_registry_from_config_file() {
-        let registry = load_registry_from_file(Path::new("src/config/domain_rules.yaml"))
+        let registry = load_registry_from_file()
             .expect("Should load config file");
         
         assert!(registry.contains_key("instagram.com"));
@@ -38,7 +37,7 @@ mod tests {
 
     #[test]
     fn gets_specific_cleaner_for_domain() {
-        let registry = load_registry_from_file(Path::new("src/config/domain_rules.yaml"))
+        let registry = load_registry_from_file()
             .expect("Should load config file");
         
         let instagram_cleaner = get_cleaner_for_host_string("www.instagram.com", &registry);
@@ -50,7 +49,7 @@ mod tests {
 
     #[test]
     fn falls_back_to_default_cleaner() {
-        let registry = load_registry_from_file(Path::new("src/config/domain_rules.yaml"))
+        let registry = load_registry_from_file()
             .expect("Should load config file");
         
         let default_cleaner = get_cleaner_for_host_string("unknown.com", &registry);
