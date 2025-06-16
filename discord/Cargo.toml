@@ -1,0 +1,27 @@
+[package]
+name = "discord"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.36", features = ["full"] }
+
+reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
+
+tokio-tungstenite = { version = "0.20", features = ["rustls-tls-webpki-roots"] }
+futures-util = "0.3"
+url = "2.5"
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+anyhow = "1.0"
+thiserror = "1.0"
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+cleaner = { path = "../cleaner" }
+
+dotenv = "0.15"
+
