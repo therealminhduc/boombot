@@ -3,10 +3,10 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum BotError {
     #[error("WebSocket error: {0}")]
-    WebSocket(#[from] tokio_tungstenite::tungstenite::Error),
+    WebSocket(#[from] Box<tokio_tungstenite::tungstenite::Error>),
 
     #[error("HTTP error: {0}")]
-    Http(#[from] reqwest::Error),
+    Http(#[from] Box<reqwest::Error>),
 
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
@@ -25,3 +25,15 @@ pub enum BotError {
 }
 
 pub type Result<T> = std::result::Result<T, BotError>;
+
+impl From<tokio_tungstenite::tungstenite::Error> for BotError {
+    fn from(err: tokio_tungstenite::tungstenite::Error) -> Self {
+        BotError::WebSocket(Box::new(err))
+    }
+}
+
+impl From<reqwest::Error> for BotError {
+    fn from(err: reqwest::Error) -> Self {
+        BotError::Http(Box::new(err))
+    }
+}
