@@ -1,9 +1,15 @@
-# URL Cleaner Bot
+<p align="center">
+  <img src="assets/boom-bot.png" alt="Boombot Logo" width="200"/>
+</p>
+
+# Boombot
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust Version](https://img.shields.io/badge/rust-1.70+-blue.svg)](https://www.rust-lang.org)
 
-A Discord bot that cleans URLs by removing tracking parameters. Built in Rust with a modular architecture.
+**Boombot** is a Discord bot that cleans URLs by removing tracking parameters. Built in Rust with a modular architecture.
+
+> _"Drop your messy links, Boombot will clean them with a boom !"_
 
 ## 🚀 Features
 
@@ -25,8 +31,8 @@ A Discord bot that cleans URLs by removing tracking parameters. Built in Rust wi
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/url_cleaner.git
-cd url_cleaner
+git clone https://github.com/yourusername/boombot.git
+cd boombot
 
 # Build the project
 cargo build --release
@@ -44,9 +50,9 @@ DISCORD_APPLICATION_ID=your_application_id
 
 ## 🎮 Usage
 
-### Discord Bot
+### Boombot on Discord
 
-1. Invite the bot to your server.
+1. Invite Boombot to your server.
 2. Use the `/clean` command with a URL:
 ```
 /clean url:https://example.com?utm_source=twitter&utm_medium=social
@@ -77,7 +83,7 @@ The project consists of three main components:
 - Interactive command-line tool.
 - Example of cleaner library integration.
 
-### 3. `discord` (Discord Bot)
+### 3. `discord` (Boombot)
 - Discord integration.
 - Slash command handling.
 - Real-time URL cleaning in Discord servers.
