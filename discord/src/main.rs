@@ -94,7 +94,11 @@ fn handle_interaction(data: &serde_json::Value, http: &http::DiscordClient) -> R
             // (without taking ownership, the variables would be borrowed, which isn't allowed in async closures)
             
             tokio::spawn(async move {
-                if let Err(e) = http.respond_to_interaction(&interaction_id, &token, &response).await {
+                let start = std::time::Instant::now();
+                let result = http.respond_to_interaction(&interaction_id, &token, &response).await;
+                let elapsed = start.elapsed().as_millis();
+                info!("Responded to interaction in {} ms", elapsed);
+                if let Err(e) = result {
                     error!("Failed to respond to interaction: {}", e);
                 }
             });
@@ -102,7 +106,11 @@ fn handle_interaction(data: &serde_json::Value, http: &http::DiscordClient) -> R
         Err(e) => {
             let response = format!("❌ Error cleaning URL: {}", e);
             tokio::spawn(async move {
-                if let Err(e) = http.respond_to_interaction(&interaction_id, &token, &response).await {
+                let start = std::time::Instant::now();
+                let result = http.respond_to_interaction(&interaction_id, &token, &response).await;
+                let elapsed = start.elapsed().as_millis();
+                info!("Responded to interaction (error) in {} ms", elapsed);
+                if let Err(e) = result {
                     error!("Failed to respond to interaction: {}", e);
                 }
             });
