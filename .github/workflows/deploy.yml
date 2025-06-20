@@ -18,13 +18,13 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build release binary
-        run: cargo build --release --package discord
+        run: cargo build --release --package discord --bin boombot
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@v4
         with:
           name: boombot-binary
-          path: target/release/discord
+          path: target/release/boombot
           retention-days: 30
 
   deploy:
@@ -37,7 +37,7 @@ jobs:
           name: boombot-binary
 
       - name: Make binary executable
-        run: chmod +x discord
+        run: chmod +x boombot
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.8.0
@@ -50,21 +50,21 @@ jobs:
           DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
-            mkdir -p /home/ubuntu/boombot/discord
-            cat > /home/ubuntu/boombot/discord/.env <<EOF
+            mkdir -p /home/ubuntu/boombot/binary
+            cat > /home/ubuntu/boombot/binary/.env <<EOF
             DISCORD_TOKEN=${DISCORD_TOKEN}
             DISCORD_APPLICATION_ID=${DISCORD_APPLICATION_ID}
             EOF
-            chmod 600 /home/ubuntu/boombot/discord/.env
+            chmod 600 /home/ubuntu/boombot/binary/.env
           "
 
       - name: Deploy binary to VPS
         run: |
           # Copy the binary to the server
-          scp -o StrictHostKeyChecking=no discord ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/discord/
+          scp -o StrictHostKeyChecking=no boombot ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/binary/
           
           # Set permissions and restart service
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
-            chmod +x /home/ubuntu/boombot/discord/discord &&
+            chmod +x /home/ubuntu/boombot/binary/boombot &&
             sudo systemctl restart boombot
           "
