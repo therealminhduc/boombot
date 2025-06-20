@@ -1,4 +1,4 @@
-name: url_cleaner CI
+name: Boombot CI
 
 on:
   push:
