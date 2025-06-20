@@ -18,12 +18,12 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build release binary
-        run: cargo build --release --bin discord
+        run: cargo build --release --package discord
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: discord-bot-binary
+          name: boombot-binary
           path: target/release/discord
           retention-days: 30
 
