@@ -5,23 +5,54 @@ mod http;
 
 use crate::error::Result;
 use dotenv::dotenv;
-use tracing::{info, error};
+use tracing::{info, error, warn};
+use tokio::time::{sleep, Duration};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .with_level(true)
+        .with_max_level(tracing::Level::INFO)
+        .init();
 
     dotenv().ok();
-    info!("Starting Discord bot ...");
+    info!("=== Discord bot starting ===");
 
     let config = config::Config::from_env()?;
-
     let http = http::DiscordClient::new(config.token.clone(), config.application_id.clone());
 
-    http.register_command().await?;
+    // Register command once at startup 
+    if let Err(e) = http.register_command().await { 
+        error!("Failed to register command: {}", e);
+        return Err(e);
+    }
     info!("Registered /clean command");
 
-    let mut gateway = gateway::Gateway::connect(&config.gateway_url, config.token).await?;
+    let mut reconnection_delay = Duration::from_secs(1);
+    let max_delay = Duration::from_secs(300); // 5 minutes
+
+    loop {
+        match run_bot(&config, &http).await {
+            Ok(_) => {
+                info!("Bot is running ...");
+                break;
+            }
+            Err(e) => {
+                error!("Bot error: {}. Reconnecting in {:?} ...", e, reconnection_delay);
+                sleep(reconnection_delay).await;
+
+                // Exponential backoff: double the delay, but cap at max_delay
+                reconnection_delay = std::cmp::min(reconnection_delay * 2, max_delay);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+async fn run_bot(config: &config::Config, http: &http::DiscordClient) -> Result<()> {
+    let mut gateway = gateway::Gateway::connect(&config.gateway_url, config.token.clone()).await?;
     gateway.identify().await?;
     info!("Connected to Discord Gateway");
 
@@ -86,6 +117,7 @@ fn handle_interaction(data: &serde_json::Value, http: &http::DiscordClient) -> R
     // Clean the URL
     match cleaner::clean_url(url) {
         Ok(cleaned) => {
+            info!("URL cleaned successfully, sending response");
             let response = format!("🧹 Cleaned URL:\n{}", cleaned);
 
             // @mynkie:
@@ -100,10 +132,13 @@ fn handle_interaction(data: &serde_json::Value, http: &http::DiscordClient) -> R
                 info!("Responded to interaction in {} ms", elapsed);
                 if let Err(e) = result {
                     error!("Failed to respond to interaction: {}", e);
+                } else {
+                    info!("Response sent successfully");
                 }
             });
         }
         Err(e) => {
+            error!("Failed to clean URL: {}", e);
             let response = format!("❌ Error cleaning URL: {}", e);
             tokio::spawn(async move {
                 let start = std::time::Instant::now();
