@@ -5,7 +5,7 @@ mod http;
 
 use crate::error::Result;
 use dotenv::dotenv;
-use tracing::{info, error, warn};
+use tracing::{info, error};
 use tokio::time::{sleep, Duration};
 
 #[tokio::main]
