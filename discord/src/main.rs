@@ -60,8 +60,6 @@ async fn main() -> Result<()> {
             }
         }
     }
-
-    Ok(())
 }
 
 async fn run_bot(config: &config::Config, http: &http::DiscordClient) -> Result<()> {
