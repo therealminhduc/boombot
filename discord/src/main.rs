@@ -68,7 +68,7 @@ async fn run_bot(config: &config::Config, http: &http::DiscordClient) -> Result<
                 // When someone uses the /clean command
                 "INTERACTION_CREATE" => {
                     if let Some(data) = event.get("d") {
-                        handle_interaction(data, &http)?;
+                        handle_interaction(data, http)?;
                     }
                 }
 
