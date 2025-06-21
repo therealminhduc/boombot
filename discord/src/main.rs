@@ -33,10 +33,23 @@ async fn main() -> Result<()> {
     let max_delay = Duration::from_secs(300); // 5 minutes
 
     loop {
+        let connection_start = std::time::Instant::now();
+
         match run_bot(&config, &http).await {
             Ok(_) => {
-                info!("Bot is running ...");
-                break;
+                let uptime = connection_start.elapsed();
+
+                // If the bot has been running for more than 5 minutes, we consider this is stable, reset the reconnection delay
+                if uptime > Duration::from_secs(300) {
+                    info!("Stable connection detected, resetting reconnection delay");
+                    reconnection_delay = Duration::from_secs(1);
+                }
+
+                info!("Discord connection closed, reconnecting in {:?} ...", reconnection_delay);
+                sleep(reconnection_delay).await;
+                
+                // Use progressive backoff even for normal disconnections, but cap it lower
+                reconnection_delay = std::cmp::min(reconnection_delay * 2, Duration::from_secs(60));
             }
             Err(e) => {
                 error!("Bot error: {}. Reconnecting in {:?} ...", e, reconnection_delay);
@@ -56,7 +69,9 @@ async fn run_bot(config: &config::Config, http: &http::DiscordClient) -> Result<
     gateway.identify().await?;
     info!("Connected to Discord Gateway");
 
-    gateway.handle_events(|event| {
+    let start_time = std::time::Instant::now();
+
+    let result = gateway.handle_events(|event| {
         // Check if the event has a type field (t = Event name)
         if let Some(t) = event.get("t").and_then(|v| v.as_str()) {
             match t {
@@ -80,9 +95,12 @@ async fn run_bot(config: &config::Config, http: &http::DiscordClient) -> Result<
         Ok(())
         
         })
-        .await?;
+        .await;
 
-    Ok(())
+    let uptime = start_time.elapsed();
+    info!("Bot ran for {:?} before disconnecting", uptime);
+    
+    result
 }
 
 fn handle_interaction(data: &serde_json::Value, http: &http::DiscordClient) -> Result<()> {
