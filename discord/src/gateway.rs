@@ -4,10 +4,13 @@ use serde_json::json;
 use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream};
 use url::Url;
 use tracing::{error, info, warn};
+use tokio::time::{Duration, Instant};
 
 pub struct Gateway {
     ws_stream: WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
     token: String,
+    heartbeat_interval: Option<u64>,
+    last_heartbeat: Option<Instant>,
 }
 
 impl Gateway {
@@ -22,6 +25,8 @@ impl Gateway {
         Ok(Self {
             ws_stream,
             token,
+            heartbeat_interval: None,
+            last_heartbeat: None,
         })
     }
 
@@ -48,6 +53,19 @@ impl Gateway {
             .send(Message::Text(identify.to_string()))
             .await?;
 
+        Ok(())
+    }
+
+    /// Send a heartbeat to Discord
+    async fn send_heartbeat(&mut self) -> Result<()> {
+        info!("Sending heartbeat to Discord");
+        let heartbeat = json!({
+            "op": 1,
+            "d": null,
+        });
+        
+        self.ws_stream.send(Message::Text(heartbeat.to_string())).await?;
+        self.last_heartbeat = Some(Instant::now());
         Ok(())
     }
 
@@ -82,20 +100,25 @@ impl Gateway {
                                                     error!("Failed to send heartbeat: {}", e);
                                                     break;
                                                 }
-    
+                                                
+                                                self.last_heartbeat = Some(Instant::now());
                                                 continue;
                                             }
 
                                             10 => {
-                                                // Op code 10 = Hello message
-                                                // Discord is telling us the heartbeat interval
+                                                // Discord is sending a heartbeat interval
                                                 if let Some(d) = value.get("d") {
                                                     if let Some(heartbeat_interval) = d.get("heartbeat_interval").and_then(|v| v.as_u64()) {
                                                         info!("Heartbeat interval: {}ms", heartbeat_interval);
+                                                        self.heartbeat_interval = Some(heartbeat_interval);
+                                                        self.last_heartbeat = Some(Instant::now());
                                                     }
                                                 }
                                             }
-
+                                            11 => {
+                                                // Discord acknowledged our heartbeat
+                                                info!("Received heartbeat ACK from Discord");
+                                            }
                                             _ => {
                                                 // Ignore other op codes
                                             }
@@ -143,6 +166,22 @@ impl Gateway {
                 Err(e) => {
                     error!("Error reading message from Discord: {}", e);
                     break;
+                }
+            }
+
+            // Check if we need to send a heartbeat (automatic heartbeat)
+            if let Some(interval) = self.heartbeat_interval {
+                if let Some(last_heartbeat) = self.last_heartbeat {
+                    let elapsed = last_heartbeat.elapsed();
+                    let interval_duration = Duration::from_millis(interval);
+                    
+                    // Send heartbeat if we're approaching the interval (with some buffer)
+                    if elapsed >= interval_duration - Duration::from_secs(5) {
+                        if let Err(e) = self.send_heartbeat().await {
+                            error!("Failed to send automatic heartbeat: {}", e);
+                            break;
+                        }
+                    }
                 }
             }
         }
