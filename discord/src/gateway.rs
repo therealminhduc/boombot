@@ -1,11 +1,12 @@
 use crate::error::Result;
 use futures_util::{SinkExt, StreamExt};
 use serde_json::json;
-use tokio_tungstenite::connect_async;
+use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream};
 use url::Url;
+use tracing::{info};
 
 pub struct Gateway {
-    ws_stream: tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
+    ws_stream: WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
     token: String,
 }
 
@@ -14,6 +15,7 @@ impl Gateway {
     /// Connects to the Discord Gateway WebSocket endpoint. 
     /// Returns a Gateway struct that contains the WebSocket stream and the bot token.
     pub async fn connect(gateway_url: &str, token: String) -> Result<Self> {
+        info!("Connecting to Discord Gateway: {}", gateway_url);
         let (ws_stream, _) = connect_async(Url::parse(gateway_url)?).await?;
 
         Ok(Self {
@@ -24,6 +26,7 @@ impl Gateway {
 
     /// Identify to Discord Gateway - Starts a new session during the initial handshake.
     pub async fn identify(&mut self) -> Result<()> {
+        info!("Identifying to Discord Gateway");
         let identify = json!({
             "op": 2,    // 2 = Identify - Starts a new session during the initial handshake.
             "d": {
@@ -31,15 +34,15 @@ impl Gateway {
                 "intents": 513, // Intents: 513 = Guilds, GuildMessages, MessageContent
                 "properties": {
                     "$os": std::env::consts::OS,
-                    "$browser": "chrome",
-                    "$device": "chrome",
+                    "$browser": "boombot",
+                    "$device": "boombot",
                 }
             }
         });
 
         // Send the identify payload to the Discord Gateway
         self.ws_stream
-            .send(tokio_tungstenite::tungstenite::Message::Text(identify.to_string()))
+            .send(Message::Text(identify.to_string()))
             .await?;
 
         Ok(())
@@ -55,7 +58,7 @@ impl Gateway {
             let message = message?;
 
             // If the message is a text message, parse it as a JSON value and call the callback function.
-            if let tokio_tungstenite::tungstenite::Message::Text(text) = message {
+            if let Message::Text(text) = message {
                 let value: serde_json::Value = serde_json::from_str(&text)?;
                 callback(value)?;
             }
