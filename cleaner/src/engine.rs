@@ -1,5 +1,5 @@
 use crate::registry::get_cleaner_for_host_string;
-use crate::config::load_registry_from_file;
+use crate::config::load_registry_with_fallback;
 use crate::traits::UrlCleaner;
 
 use url::Url;
@@ -9,9 +9,9 @@ pub fn clean_url(input: &str) -> Result<String, url::ParseError> {
     let mut url = Url::parse(input)?;
     let host = url.host_str().unwrap_or("");
 
-    // Load registry from embedded config
-    let registry = load_registry_from_file()
+    let registry = load_registry_with_fallback("../cleaner/rules.db")
         .expect("Failed to load domain rules config file");
+
     let cleaner = get_cleaner_for_host_string(host, &registry);
 
     let cleaned_pairs: Vec<(String, String)> = url

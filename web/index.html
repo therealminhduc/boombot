@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/boom-bot.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boombot Contribution</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1> Boombot Contribution </h1>
+
+      <section class="add">
+          <h2>Add a new rule</h2>
+          <form id="addRuleForm" class="add-rule-form">
+              <div class="form-row">
+                  <input type="text" id="contributor" placeholder="Your name or email" required>
+                  <input type="text" id="domain" placeholder="e.g. twitter.com" required>
+                  <input type="text" id="keys" placeholder="e.g. utm_source,utm_medium,fbclid" required>
+                  <input type="text" id="startsWith" placeholder="e.g. utm_,ref_" requred>
+
+                  <button type="submit">Submit Rule</button>
+              </div>
+          </form>
+      </section>
+
+      <section class="pending-rules">
+        <h2>Pending Rules</h2>
+        <div class="table-container">
+          <table id="pendingTable">
+            <thead>
+              <tr>
+                <th>Contributor</th>
+                <th>Domain</th>
+                <th>Keys</th>
+                <th>Starts With</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pendingBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="approved-rules">
+        <h2>Approved Rules</h2>
+        <div class="table-container">
+          <table id="approvedTable">
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th>Keys</th>
+                <th>Starts With</th>
+                <th>Contributor</th>
+              </tr>
+            </thead>
+            <tbody id="approvedBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="message"></section>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

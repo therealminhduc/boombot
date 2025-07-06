@@ -3,6 +3,7 @@ pub mod cleaners;
 pub mod registry;
 pub mod config;
 pub mod engine;
+pub mod database;
 
 pub use engine::clean_url;
 
