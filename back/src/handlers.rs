@@ -50,18 +50,6 @@ pub async fn submit_rule(
     }
 
     let db = state.db.lock().await;
-    
-    // Check if rule already exists
-    if let Ok(existing_rules) = db.get_all_rules() {
-        if existing_rules.iter().any(|r| r.domain == payload.domain) {
-            return Json(ApiResponse {
-                success: false,
-                data: None,
-                message: None,
-                error: Some("Rule for this domain already exists".to_string()),
-            });
-        }
-    }
 
     // Always include utm_ and add any additional prefixes
     let mut starts_with = vec!["utm_".to_string()];
@@ -79,11 +67,11 @@ pub async fn submit_rule(
         domain: payload.domain.to_lowercase(),
         keys: payload.keys,
         starts_with, // Empty for user submissions
-        contributor: Some(payload.contributor),
+        contributors: vec![payload.contributor],
         status: "pending".to_string(),
     };
 
-    match db.insert_rule(&new_rule) {
+    match db.upsert_rule(&new_rule) {
         Ok(_) => Json(ApiResponse {
             success: true,
             data: None,

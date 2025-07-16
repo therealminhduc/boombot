@@ -12,7 +12,7 @@ pub struct DomainRule {
     pub domain: String,
     pub keys: Vec<String>,
     pub starts_with: Vec<String>,
-    pub contributor: Option<String>,
+    pub contributors: Vec<String>,
     pub status: String, // "pending", "approved", "rejected"
 }
 
@@ -76,6 +76,7 @@ impl Database {
     pub fn insert_rule(&self, rule: &DomainRule) -> Result<i64> {
         let keys_json = serde_json::to_string(&rule.keys)?;
         let starts_with_json = serde_json::to_string(&rule.starts_with)?;
+        let contributors_json = serde_json::to_string(&rule.contributors)?;
 
         self.conn.execute(
             "INSERT INTO domain_rules (domain, keys, starts_with, contributor, status) VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -83,12 +84,57 @@ impl Database {
                 rule.domain,
                 keys_json,
                 starts_with_json,
-                rule.contributor,
+                contributors_json,
                 rule.status,
             ],
         )?;
 
         Ok(self.conn.last_insert_rowid())
+    }
+
+
+    pub fn upsert_rule(&self, rule: &DomainRule) -> Result<i64> {
+
+        let mut stmt = self.conn.prepare(
+            "SELECT id, keys, starts_with, contributor FROM domain_rules WHERE domain = ? AND status = ?",
+        )?;
+
+        let mut rows = stmt.query(params![rule.domain, rule.status])?;
+
+        if let Some(row) = rows.next()? {
+            let id: i64 = row.get(0)?;
+            let mut keys: Vec<String> = serde_json::from_str(&row.get::<_, String>(1)?)?;
+            let mut starts_with: Vec<String> = serde_json::from_str(&row.get::<_, String>(2)?)?;
+            let mut contributors: Vec<String> = serde_json::from_str(&row.get::<_, String>(3)?)?;
+
+            // Merge and deduplicate
+            keys.extend(rule.keys.clone());
+            keys.sort();
+            keys.dedup();
+
+            starts_with.extend(rule.starts_with.clone());
+            starts_with.sort();
+            starts_with.dedup();
+
+            contributors.extend(rule.contributors.clone());
+            contributors.sort();
+            contributors.dedup();
+    
+            // Update the existing row
+            self.conn.execute(
+                "UPDATE domain_rules SET keys = ?, starts_with = ?, contributor = ? WHERE id = ?",
+                params![
+                    serde_json::to_string(&keys)?,
+                    serde_json::to_string(&starts_with)?,
+                    serde_json::to_string(&contributors)?,
+                    id
+                ],
+            )?;
+
+            Ok(id)
+        } else {
+            self.insert_rule(rule)
+        }
     }
 
     /// Get approved rules as a HashMap of DomainCleaner objects
@@ -131,7 +177,7 @@ impl Database {
             let domain: String = row.get(1)?;
             let keys_json: String = row.get(2)?;
             let starts_with_json: String = row.get(3)?;
-            let contributor: Option<String> = row.get(4)?;
+            let contributors_json: String = row.get(4)?;
             let status: String = row.get(5)?;
 
             let keys: Vec<String> = serde_json::from_str(&keys_json)
@@ -140,13 +186,16 @@ impl Database {
             let starts_with: Vec<String> = serde_json::from_str(&starts_with_json)
                 .map_err(|e| rusqlite::Error::InvalidParameterName(e.to_string()))?;
 
+            let contributors: Vec<String> = serde_json::from_str(&contributors_json)
+                .map_err(|e| rusqlite::Error::InvalidParameterName(e.to_string()))?;
+
             // Create a DomainRule object and return it
             Ok(DomainRule {
                 id: Some(id as i32),
                 domain,
                 keys,
                 starts_with,
-                contributor,
+                contributors,
                 status,
             })
         })?.collect::<SqliteResult<Vec<_>>>()?;
@@ -165,7 +214,7 @@ impl Database {
             let domain: String = row.get(1)?;
             let keys_json: String = row.get(2)?;
             let starts_with_json: String = row.get(3)?;
-            let contributor: Option<String> = row.get(4)?;
+            let contributor: String = row.get(4)?;
             let status: String = row.get(5)?;
 
             let keys: Vec<String> = serde_json::from_str(&keys_json)
@@ -174,13 +223,16 @@ impl Database {
             let starts_with: Vec<String> = serde_json::from_str(&starts_with_json)
                 .map_err(|e| rusqlite::Error::InvalidParameterName(e.to_string()))?;
 
+            let contributors: Vec<String> = serde_json::from_str(&contributor)
+                .map_err(|e| rusqlite::Error::InvalidParameterName(e.to_string()))?;
+
             // Create a DomainRule object and return it
             Ok(DomainRule {
                 id: Some(id as i32),
                 domain,
                 keys,
                 starts_with,
-                contributor,
+                contributors,
                 status,
             })
         })?.collect::<SqliteResult<Vec<_>>>()?;
@@ -198,7 +250,7 @@ impl Database {
             let domain: String = row.get(1)?;
             let keys_json: String = row.get(2)?;
             let starts_with_json: String = row.get(3)?;
-            let contributor: Option<String> = row.get(4)?;
+            let contributor: String = row.get(4)?;
             let status: String = row.get(5)?;
 
             let keys: Vec<String> = serde_json::from_str(&keys_json)
@@ -207,13 +259,16 @@ impl Database {
             let starts_with: Vec<String> = serde_json::from_str(&starts_with_json)
                 .map_err(|e| rusqlite::Error::InvalidParameterName(e.to_string()))?;
 
+            let contributors: Vec<String> = serde_json::from_str(&contributor)
+                .map_err(|e| rusqlite::Error::InvalidParameterName(e.to_string()))?;
+
             // Create a DomainRule object and return it
             Ok(DomainRule {
                 id: Some(id as i32),
                 domain,
                 keys,
                 starts_with,
-                contributor,
+                contributors,
                 status,
             })
         })?.collect::<SqliteResult<Vec<_>>>()?;
@@ -281,7 +336,7 @@ impl Database {
                     domain: domain_str.to_string(),
                     keys: default_keys.clone(),
                     starts_with: default_starts_with.clone(),
-                    contributor: Some("system".to_string()),
+                    contributors: vec!["system".to_string()],
                     status: "approved".to_string(),
                 };
                 self.insert_rule(&rule)?;
@@ -312,7 +367,7 @@ impl Database {
                 domain: domain_str.to_string(),
                 keys: final_keys.clone(),
                 starts_with: final_starts_with.clone(),
-                contributor: Some("system".to_string()),
+                contributors: vec!["system".to_string()],
                 status: "approved".to_string(),
             };
 
@@ -345,7 +400,7 @@ mod tests {
             domain: "test.com".to_string(),
             keys: vec!["test_key".to_string()],
             starts_with: vec!["test_".to_string()],
-            contributor: Some("test@example.com".to_string()),
+            contributors: vec!["test@example.com".to_string()],
             status: "approved".to_string(),
         };
         
