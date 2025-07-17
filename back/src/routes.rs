@@ -13,4 +13,5 @@ pub fn create_router() -> Router<crate::AppState> {
         .route("/api/rules/{id}/reject", put(reject_rule))
         .route("/api/rules/approved", get(get_approved_rules))
         .route("/api/rules/pending", get(get_pending_rules))
+        .route("/api/admin/create", post(create_admin))
 }

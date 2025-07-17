@@ -1,13 +1,11 @@
-import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { ApiService } from "../services/api";
 import type { DomainRule } from "../services/api";
-import AddRuleForm from "../components/AddRuleForm";
 import RulesTable from "../components/RulesTable";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
-export default function Contribution() {
+export default function Admin() {
     const [pendingRules, setPendingRules] = useState<DomainRule[]>([]);
     const [approvedRules, setApprovedRules] = useState<DomainRule[]>([]);
 
@@ -23,7 +21,7 @@ export default function Contribution() {
         } catch (error) {
             console.error("Error loading rules:", error);
         }
-    }
+    };
 
     useEffect(() => {
         loadRules();
@@ -39,33 +37,26 @@ export default function Contribution() {
             alignItems: 'center',
             minHeight: '100vh'
         }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Boombot Contribution</h1>
-        
+        <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Admin Panel</h1>
         <div style={{ width: '100%', maxWidth: '1000px' }}>
-            <AddRuleForm onSuccess={loadRules} />
-            
             <RulesTable 
               title="Pending Rules" 
               rules={pendingRules} 
               type="pending"
               onAction={loadRules}
-              isAdmin={false}
+              isAdmin={true}
             />
-            
             <RulesTable 
               title="Approved Rules" 
               rules={approvedRules} 
               type="approved"
             />
         </div>
-
-        
         <Button asChild size="lg" variant="ghost">
-            <Link to="/" className="flex items-center gap-2">
-                <ArrowLeft className="w-6 h-6" /> Back to Home
+            <Link to="/" className="mt-4">
+                ← Back to Home
             </Link>
         </Button>
       </div>
     );
-
 }

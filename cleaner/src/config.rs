@@ -3,7 +3,8 @@ use serde::Deserialize;
 use std::error::Error;
 
 use crate::cleaners::DomainCleaner;
-use crate::database::{Database, Result as DbResult};
+use crate::database::Database;
+use crate::database::rules::Result as DbResult;
 
 pub const DOMAIN_RULES_YAML: &str = include_str!("config/domain_rules.yaml");
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ApiService, type SubmissionRequest } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface AddRuleFormProps {
     onSuccess: () => void;
@@ -47,7 +48,7 @@ export default function AddRuleForm({ onSuccess }: AddRuleFormProps) {
             console.error("Submission error:", error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             
-            alert(`Failed to submit rule: ${errorMessage}`);
+            toast.error(`Failed to submit rule: ${errorMessage}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -55,7 +56,7 @@ export default function AddRuleForm({ onSuccess }: AddRuleFormProps) {
 
     return (
         <section style={{ marginBottom: '2rem' }}>
-            <h2>Add a new rule</h2>
+            <h2 className="text-2xl font-semibold mb-4">Add a new rule</h2>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 <Input 
@@ -79,7 +80,6 @@ export default function AddRuleForm({ onSuccess }: AddRuleFormProps) {
                     placeholder="e.g. utm_source, fbclid"
                     value={formData.keys}
                     onChange={(e) => setFormData(prev => ({ ...prev, keys: e.target.value }))}
-                    required
                 />
 
                 <Input

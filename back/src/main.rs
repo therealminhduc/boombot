@@ -4,6 +4,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod models;
+mod admin_model;
 mod routes;
 mod handlers;
 mod validation;

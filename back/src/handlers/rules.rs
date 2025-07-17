@@ -2,17 +2,9 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use serde_json::Value;
 use crate::models::{SubmissionRequest, ApiResponse, DomainRule};
 use crate::validation::is_valid_domain;
 use crate::AppState;
-
-pub async fn health_check() -> Json<Value> {
-    Json(serde_json::json!({
-        "status": "ok",
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-    }))
-}
 
 /// Get all rules
 pub async fn get_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<DomainRule>>> {
@@ -46,6 +38,15 @@ pub async fn submit_rule(
             data: None,
             message: None,
             error: Some("Invalid domain format".to_string()),
+        });
+    }
+
+    if payload.contributor.trim().is_empty() {
+        return Json(ApiResponse {
+            success: false,
+            data: None,
+            message: None,
+            error: Some("Contributor is required".to_string()),
         });
     }
 

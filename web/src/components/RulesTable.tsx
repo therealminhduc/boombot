@@ -1,22 +1,24 @@
 import { ApiService, type DomainRule } from '../services/api';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface RulesTableProps {
     title: string;
     rules: DomainRule[];
     type: 'pending' | 'approved';
     onAction?: () => void;
+    isAdmin?: boolean;
 }
 
-export default function RulesTable({ title, rules, type, onAction }: RulesTableProps) {
+export default function RulesTable({ title, rules, type, onAction, isAdmin = false }: RulesTableProps) {
     const handleApprove = async (id: number) => {
         try {
             await ApiService.approveRule(id);
             onAction?.();
         } catch (error) {
             console.error('Failed to approve rule:', error);
-            alert('Failed to approve rule');
+            toast.error('Failed to approve rule');
         }
     }
 
@@ -26,7 +28,7 @@ export default function RulesTable({ title, rules, type, onAction }: RulesTableP
             onAction?.();
         } catch (error) {
             console.error('Failed to reject rule:', error);
-            alert('Failed to reject rule');
+            toast.error('Failed to reject rule');
         }
     }
 
@@ -37,12 +39,20 @@ export default function RulesTable({ title, rules, type, onAction }: RulesTableP
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            {type === 'pending' && <TableHead>Contributor</TableHead>}
+                            {type === 'pending' && 
+                                <TableHead>Contributor</TableHead>
+                            }
+
                             <TableHead>Domain</TableHead>
                             <TableHead>Keys</TableHead>
                             <TableHead>Starts With</TableHead>
-                            {type === 'pending' && <TableHead>Actions</TableHead>}
-                            {type === 'approved' && <TableHead>Contributor</TableHead>}
+                            
+                            {type === 'pending' && isAdmin && 
+                                <TableHead>Actions</TableHead>
+                            }
+                            {type === 'approved' && 
+                                <TableHead>Contributor</TableHead>
+                            }
                         </TableRow>
                     </TableHeader>
 
@@ -60,7 +70,7 @@ export default function RulesTable({ title, rules, type, onAction }: RulesTableP
                                 <TableCell>{rule.domain}</TableCell>
                                 <TableCell>{rule.keys.join(', ')}</TableCell>
                                 <TableCell>{rule.starts_with.join(', ')}</TableCell>
-                                {type === 'pending' && (
+                                {type === 'pending' && isAdmin && (
                                     <TableCell>
                                         <div className="flex gap-2">
                                             <Button
