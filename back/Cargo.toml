@@ -33,4 +33,10 @@ lazy_static = "1.4"
 
 bcrypt = "0.17.0"
 
+jsonwebtoken = "9.3.1"
+axum-extra = { version = "0.9", features = ["typed-header"] }
+headers = "0.4"
+
+dotenv = "0.15"
+
 cleaner = { path = "../cleaner" }

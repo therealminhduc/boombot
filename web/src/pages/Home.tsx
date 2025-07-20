@@ -51,6 +51,11 @@ export default function Home() {
                     </div>
                 </div>
             </div>
+            <footer className="absolute bottom-4 w-full flex justify-center z-30">
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center max-w-xl px-2">
+                    Name inspired by Valorant. Not affiliated with Riot Games.                
+                </p>
+            </footer>
         </div>
     );
 }

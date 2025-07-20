@@ -2,7 +2,9 @@ use axum::{
     routing::{get, post, put},
     Router,
 };
-use crate::handlers::*;
+use crate::{auth::*, handlers::*};
+
+
 
 pub fn create_router() -> Router<crate::AppState> {
     Router::new()
@@ -14,4 +16,5 @@ pub fn create_router() -> Router<crate::AppState> {
         .route("/api/rules/approved", get(get_approved_rules))
         .route("/api/rules/pending", get(get_pending_rules))
         .route("/api/admin/create", post(create_admin))
+        .route("/api/admin/login", post(login_admin))
 }

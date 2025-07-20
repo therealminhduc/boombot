@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ApiService, type SubmissionRequest } from "../services/api";
+import { RulesService, type SubmissionRequest } from "../services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -33,7 +33,7 @@ export default function AddRuleForm({ onSuccess }: AddRuleFormProps) {
                 contributor: formData.contributor,
             };
 
-            await ApiService.submitRule(request);
+            await RulesService.submitRule(request);
 
             // Reset form
             setFormData({

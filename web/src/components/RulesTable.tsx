@@ -1,4 +1,4 @@
-import { ApiService, type DomainRule } from '../services/api';
+import { RulesService, type DomainRule } from '../services';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -14,7 +14,7 @@ interface RulesTableProps {
 export default function RulesTable({ title, rules, type, onAction, isAdmin = false }: RulesTableProps) {
     const handleApprove = async (id: number) => {
         try {
-            await ApiService.approveRule(id);
+            await RulesService.approveRule(id);
             onAction?.();
         } catch (error) {
             console.error('Failed to approve rule:', error);
@@ -24,7 +24,7 @@ export default function RulesTable({ title, rules, type, onAction, isAdmin = fal
 
     const handleReject = async (id: number) => {
         try {
-            await ApiService.rejectRule(id);
+            await RulesService.rejectRule(id);
             onAction?.();
         } catch (error) {
             console.error('Failed to reject rule:', error);
@@ -33,7 +33,7 @@ export default function RulesTable({ title, rules, type, onAction, isAdmin = fal
     }
 
     return (
-        <section className="mb-8">
+        <section>
             <h2 className="text-2xl font-semibold mb-4">{title}</h2>
             <div className="border rounded-lg overflow-hidden">
                 <Table>

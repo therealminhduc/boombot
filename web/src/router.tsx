@@ -2,6 +2,8 @@ import { createRouter, createRoute, createRootRoute } from "@tanstack/react-rout
 import Home from "./pages/Home";
 import Contribution from "./pages/Contribution";
 import Admin from "./pages/Admin";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminConnection from "./pages/AdminConnection";
 
 const rootRoute = createRootRoute();
 
@@ -20,10 +22,20 @@ const contributionRoute = createRoute({
 const adminRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/admin",
-    component: Admin,
-})
+    component: () => (  // Wrap Admin with ProtectedRoute
+        <ProtectedRoute>
+            <Admin />
+        </ProtectedRoute>
+    ),
+});
 
-const routeTree = rootRoute.addChildren([indexRoute, contributionRoute, adminRoute]);
+const adminConnectionRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/connection",
+    component: AdminConnection,
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, contributionRoute, adminRoute, adminConnectionRoute]);
 
 export const router = createRouter({ routeTree });
 

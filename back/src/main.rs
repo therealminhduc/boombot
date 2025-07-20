@@ -9,10 +9,14 @@ mod routes;
 mod handlers;
 mod validation;
 mod config;
+mod auth;
 
 use cleaner::database::Database;
+use cleaner::database::admin::create_first_admin_if_needed;
 use crate::routes::create_router;
 use crate::config::Config;
+
+
 
 // Shared database state
 #[derive(Clone)]
@@ -22,6 +26,7 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
@@ -40,6 +45,8 @@ async fn main() {
     } else {
         tracing::info!("Successfully migrated rules from YAML");
     }
+
+    create_first_admin_if_needed(db.conn());
 
     let state = AppState {
         db: Arc::new(Mutex::new(db)),

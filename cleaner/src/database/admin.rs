@@ -1,6 +1,8 @@
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use std::env;
+use bcrypt::{hash, DEFAULT_COST};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AdminUser {
@@ -107,5 +109,32 @@ pub fn delete_admin(conn: &Connection, username: &str) -> Result<()> {
         Err(AdminError::NotFound)
     } else {
         Ok(())
+    }
+}
+
+/// Create the first admin from environment variables if none exists
+pub fn create_first_admin_if_needed(conn: &rusqlite::Connection) {
+    match has_admin(conn) {
+        Ok(false) => {
+            let username = env::var("ADMIN_USERNAME").ok();
+            let password = env::var("ADMIN_PASSWORD").ok();
+            if let (Some(username), Some(password)) = (username, password) {
+                match hash(&password, DEFAULT_COST) {
+                    Ok(password_hash) => {
+                        match insert_admin(conn, &username, &password_hash) {
+                            Ok(_) => {
+                                println!("First admin created from environment variables");
+                            },
+                            Err(e) => eprintln!("Failed to insert first admin: {}", e),
+                        }
+                    },
+                    Err(e) => eprintln!("Failed to hash admin password: {}", e),
+                }
+            } else {
+                eprintln!("No admin exists and ADMIN_USERNAME or ADMIN_PASSWORD not set. No admin created.");
+            }
+        },
+        Ok(true) => {}, // At least one admin exists
+        Err(e) => eprintln!("Failed to check for existing admin: {}", e),
     }
 }

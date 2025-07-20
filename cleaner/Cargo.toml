@@ -11,3 +11,4 @@ rusqlite = { version = "0.36.0", features = ["bundled"] }
 serde_json = "1.0"
 thiserror = "1.0"
 tracing = "0.1"
+bcrypt = "0.17.0"

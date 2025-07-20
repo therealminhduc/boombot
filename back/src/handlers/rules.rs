@@ -2,12 +2,12 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use crate::models::{SubmissionRequest, ApiResponse, DomainRule};
+use crate::models::{SubmissionRequest, ApiResponse};
 use crate::validation::is_valid_domain;
 use crate::AppState;
 
-/// Get all rules
-pub async fn get_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<DomainRule>>> {
+/// Get all domain rules
+pub async fn get_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<cleaner::database::DomainRule>>> {
     let db = state.db.lock().await;
     match db.get_all_rules() {
         Ok(rules) => Json(ApiResponse {
@@ -25,7 +25,7 @@ pub async fn get_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<Do
     }
 }
 
-/// Submit a new rule
+/// Submit a new domain rule for review
 pub async fn submit_rule(
     State(state): State<AppState>,
     Json(payload): Json<SubmissionRequest>,
@@ -62,12 +62,12 @@ pub async fn submit_rule(
         }
     }
 
-    // Create new rule
-    let new_rule = DomainRule {
+    // Create new rule using the cleaner crate's DomainRule
+    let new_rule = cleaner::database::DomainRule {
         id: None,
         domain: payload.domain.to_lowercase(),
         keys: payload.keys,
-        starts_with, // Empty for user submissions
+        starts_with,
         contributors: vec![payload.contributor],
         status: "pending".to_string(),
     };
@@ -88,7 +88,7 @@ pub async fn submit_rule(
     }
 }
 
-/// Approve a rule
+/// Approve a pending rule
 pub async fn approve_rule(
     State(state): State<AppState>,
     Path(id): Path<i64>,
@@ -110,7 +110,7 @@ pub async fn approve_rule(
     }
 }
 
-/// Reject a rule
+/// Reject a pending rule
 pub async fn reject_rule(
     State(state): State<AppState>,
     Path(id): Path<i64>,
@@ -133,7 +133,7 @@ pub async fn reject_rule(
 }
 
 /// Get approved rules
-pub async fn get_approved_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<DomainRule>>> {
+pub async fn get_approved_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<cleaner::database::DomainRule>>> {
     let db = state.db.lock().await;
 
     match db.get_approved_rules_for_api() {
@@ -153,7 +153,7 @@ pub async fn get_approved_rules(State(state): State<AppState>) -> Json<ApiRespon
 }
 
 /// Get pending rules
-pub async fn get_pending_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<DomainRule>>> {
+pub async fn get_pending_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<cleaner::database::DomainRule>>> {
     let db = state.db.lock().await;
 
     match db.get_pending_rules_for_api() {
