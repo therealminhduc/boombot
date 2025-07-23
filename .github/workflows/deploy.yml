@@ -49,21 +49,15 @@ jobs:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
         run: |
+          # First, ensure directories exist and have correct permissions
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
-            # Create all necessary directories
-            mkdir -p /home/ubuntu/boombot/{discord,data}
-            
-            # Move existing files if they exist
-            if [ -d /home/ubuntu/boombot/binary ]; then
-              mv /home/ubuntu/boombot/binary/* /home/ubuntu/boombot/discord/ 2>/dev/null || true
-              rm -rf /home/ubuntu/boombot/binary
-            fi
+            sudo mkdir -p /home/ubuntu/boombot/{discord,data}
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/boombot
+            sudo chmod -R 755 /home/ubuntu/boombot
+          "
 
-            # Move database if it's in old location
-            if [ -f /home/ubuntu/boombot/discord/rules.db ]; then
-              mv /home/ubuntu/boombot/discord/rules.db /home/ubuntu/boombot/data/
-            fi
-
+          # Then continue with environment setup
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
             # Create .env file
             cat > /home/ubuntu/boombot/discord/.env <<EOF
             DISCORD_TOKEN=${DISCORD_TOKEN}
