@@ -20,10 +20,10 @@ impl DiscordClient {
     /// Registers the /clean command
     /// This registration is permanent and will remain in the server's command list until it is removed.
     pub async fn register_command(&self) -> Result<()> {
-        let url = format!(
-            "https://discord.com/api/v10/applications/{}/commands",
-            self.application_id
-        );
+            let url = format!(
+                "https://discord.com/api/v10/applications/{application_id}/commands",
+                application_id = self.application_id
+            );
 
         let command = serde_json::json!({
             "name": "clean",
@@ -37,7 +37,7 @@ impl DiscordClient {
         });
 
         let response = self.client.post(&url)
-            .header("Authorization", format!("Bot {}", self.token))
+            .header("Authorization", format!("Bot {token}", token = self.token))
             .json(&command)
             .send()
             .await?;
@@ -59,9 +59,7 @@ impl DiscordClient {
         content: &str,
     ) -> Result<()> {
         let url = format!(
-            "https://discord.com/api/v10/interactions/{}/{}/callback",
-            interaction_id,
-            interaction_token
+            "https://discord.com/api/v10/interactions/{interaction_id}/{interaction_token}/callback",
         );
 
         let response = serde_json::json!({
@@ -72,7 +70,7 @@ impl DiscordClient {
         });
 
         self.client.post(&url)
-            .header("Authorization", format!("Bot {}", self.token))
+            .header("Authorization", format!("Bot {token}", token = self.token))
             .json(&response)
             .send()
             .await?;

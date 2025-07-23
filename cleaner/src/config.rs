@@ -3,9 +3,10 @@ use serde::Deserialize;
 use std::error::Error;
 
 use crate::cleaners::DomainCleaner;
+use crate::database::Database;
+use crate::database::rules::Result as DbResult;
 
-// Embed the config file at compile time
-const DOMAIN_RULES_YAML: &str = include_str!("config/domain_rules.yaml");
+pub const DOMAIN_RULES_YAML: &str = include_str!("config/domain_rules.yaml");
 
 
 /// Configuration for a domain's URL cleaning rules
@@ -52,4 +53,36 @@ pub fn load_registry_from_file() -> Result<HashMap<String, DomainCleaner>, Box<d
     }
 
     Ok(registry)
+}
+
+/// Load registry from database
+pub fn load_registry_from_database(_db_path: &str) -> DbResult<HashMap<String, DomainCleaner>> {
+    let db = Database::new(_db_path)?;
+    
+    match db.migrate_from_yaml() {
+        Ok(_) => {
+            // Migration was successful (either performed or skipped)
+            // The actual status is logged inside migrate_from_yaml()
+        },
+        Err(e) => {
+            println!("Failed to migrate rules from YAML: {e}");
+        }
+    }
+    
+    db.get_approved_rules()
+}
+
+/// Fallback function to load registry from database or file
+/// If database is not found, load from file
+pub fn load_registry_with_fallback(_db_path: &str) -> Result<HashMap<String, DomainCleaner>, Box<dyn Error>> {
+    match load_registry_from_database(_db_path) {
+        Ok(registry) => {
+            println!("Successfully loaded registry from database");
+            Ok(registry)
+        },
+        Err(e) => {
+            println!("Failed to load from database: {e}, falling back to YAML");
+            load_registry_from_file()
+        }
+    }
 }

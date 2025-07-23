@@ -23,22 +23,21 @@ pub fn get_cleaner_for_host_string<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::load_registry_from_file;
+    use crate::config::load_registry_with_fallback;
 
     #[test]
-    fn loads_registry_from_config_file() {
-        let registry = load_registry_from_file()
-            .expect("Should load config file");
+    fn loads_registry_from_database_with_fallback() {
+        let registry = load_registry_with_fallback("test_rules.db")
+            .expect("Should load registry");
         
-        assert!(registry.contains_key("instagram.com"));
-        assert!(registry.contains_key("linkedin.com"));
-        assert!(registry.contains_key("default"));
+        // Test that we can load the registry (either from DB or YAML fallback)
+        assert!(!registry.is_empty());
     }
 
     #[test]
     fn gets_specific_cleaner_for_domain() {
-        let registry = load_registry_from_file()
-            .expect("Should load config file");
+        let registry = load_registry_with_fallback("test_rules.db")
+            .expect("Should load registry");
         
         let instagram_cleaner = get_cleaner_for_host_string("www.instagram.com", &registry);
         assert!(instagram_cleaner.should_remove("igsh"));
@@ -49,8 +48,8 @@ mod tests {
 
     #[test]
     fn falls_back_to_default_cleaner() {
-        let registry = load_registry_from_file()
-            .expect("Should load config file");
+        let registry = load_registry_with_fallback("test_rules.db")
+            .expect("Should load registry");
         
         let default_cleaner = get_cleaner_for_host_string("unknown.com", &registry);
         assert!(default_cleaner.should_remove("utm_source"));

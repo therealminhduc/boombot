@@ -3,6 +3,9 @@ defaults:
   starts_with: ["utm_"]
 
 domains:
+  airbnb.com:
+    keys: ["unique_share_id"]
+
   facebook.com:
     keys: ["fbclid"]
 

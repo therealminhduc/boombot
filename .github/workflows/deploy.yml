@@ -44,27 +44,62 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
-      - name: Create .env file on VPS
+      - name: Setup directories and environment
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
-            mkdir -p /home/ubuntu/boombot/binary
-            cat > /home/ubuntu/boombot/binary/.env <<EOF
+            # Create all necessary directories
+            mkdir -p /home/ubuntu/boombot/{discord,data}
+            
+            # Move existing files if they exist
+            if [ -d /home/ubuntu/boombot/binary ]; then
+              mv /home/ubuntu/boombot/binary/* /home/ubuntu/boombot/discord/ 2>/dev/null || true
+              rm -rf /home/ubuntu/boombot/binary
+            fi
+
+            # Move database if it's in old location
+            if [ -f /home/ubuntu/boombot/discord/rules.db ]; then
+              mv /home/ubuntu/boombot/discord/rules.db /home/ubuntu/boombot/data/
+            fi
+
+            # Create .env file
+            cat > /home/ubuntu/boombot/discord/.env <<EOF
             DISCORD_TOKEN=${DISCORD_TOKEN}
             DISCORD_APPLICATION_ID=${DISCORD_APPLICATION_ID}
+            DATABASE_PATH=/home/ubuntu/boombot/data/rules.db
             EOF
-            chmod 600 /home/ubuntu/boombot/binary/.env
+            chmod 600 /home/ubuntu/boombot/discord/.env
           "
 
       - name: Deploy binary to VPS
         run: |
           # Copy the binary to the server
-          scp -o StrictHostKeyChecking=no boombot ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/binary/
+          scp -o StrictHostKeyChecking=no boombot ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/discord/
           
-          # Set permissions and restart service
+          # Update service configuration and restart
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
-            chmod +x /home/ubuntu/boombot/binary/boombot &&
+            # Update systemd service configuration
+            sudo tee /etc/systemd/system/boombot.service <<EOF
+            [Unit]
+            Description=Boombot Discord Service
+            After=network.target
+
+            [Service]
+            Type=simple
+            User=ubuntu
+            WorkingDirectory=/home/ubuntu/boombot/discord
+            EnvironmentFile=/home/ubuntu/boombot/discord/.env
+            ExecStart=/home/ubuntu/boombot/discord/boombot
+            Restart=always
+
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+
+            # Make binary executable and restart service
+            chmod +x /home/ubuntu/boombot/discord/boombot
+            sudo systemctl daemon-reload
             sudo systemctl restart boombot
           "

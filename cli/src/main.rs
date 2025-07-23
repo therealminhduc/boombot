@@ -22,17 +22,17 @@ fn main() {
                 
                 match clean_url(url) {
                     Ok(cleaned) => {
-                        println!("Cleaned URL: {}", cleaned);
+                        println!("Cleaned URL: {cleaned}");
                         println!();
                     },
                     Err(e) => {
-                        println!("Error: Invalid URL - {}", e);
+                        println!("Error: Invalid URL - {e}");
                         println!();
                     },
                 }
             }
             Err(e) => {
-                println!("Error reading input: {}", e);
+                println!("Error reading input: {e}");
                 println!();
             },
         }
