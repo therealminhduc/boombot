@@ -2,7 +2,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use axum::{extract::State, Json};
 use bcrypt::verify;
 use hyper::StatusCode;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, errors::Error};
+use jsonwebtoken::{encode, EncodingKey, Header, errors::Error};
 use serde::{Deserialize, Serialize};
 use crate::AppState;
 
@@ -38,14 +38,14 @@ pub fn create_jwt(username: String) -> Result<String, Error> {
     encode(&Header::default(), &claims, &EncodingKey::from_secret(SECRET))
 }
 
-pub fn validate_jwt(token: &str) -> Result<Claims, Error> {
-    decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(SECRET),
-        &Validation::default(),
-    )
-    .map(|data| data.claims)
-}
+// pub fn validate_jwt(token: &str) -> Result<Claims, Error> {
+//     decode::<Claims>(
+//         token,
+//         &DecodingKey::from_secret(SECRET),
+//         &Validation::default(),
+//     )
+//     .map(|data| data.claims)
+// }
 
 pub async fn login_admin(
     State(state): State<AppState>,
@@ -54,7 +54,7 @@ pub async fn login_admin(
     
     let db = state.db.lock().await;
 
-    match cleaner::database::admin::get_admin_by_username(&db.conn(), &payload.username) {
+    match cleaner::database::admin::get_admin_by_username(db.conn(), &payload.username) {
         Ok(admin) => {
             
             if verify(&payload.password, &admin.password).unwrap_or(false) {
