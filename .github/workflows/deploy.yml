@@ -44,19 +44,29 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
-      - name: Setup directories and environment
+      - name: Verify and prepare directories
+        run: |
+          # Debug: Check if we can connect and show current permissions
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
+            echo 'Current directory structure:'
+            ls -la /home/ubuntu/boombot/
+            
+            echo 'Ensuring directories exist with correct permissions...'
+            sudo rm -rf /home/ubuntu/boombot/discord
+            sudo mkdir -p /home/ubuntu/boombot/discord
+            sudo mkdir -p /home/ubuntu/boombot/data
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/boombot
+            sudo chmod -R 755 /home/ubuntu/boombot
+            
+            echo 'Updated directory structure:'
+            ls -la /home/ubuntu/boombot/
+          "
+
+      - name: Setup environment
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
         run: |
-          # First, ensure directories exist and have correct permissions
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
-            sudo mkdir -p /home/ubuntu/boombot/{discord,data}
-            sudo chown -R ubuntu:ubuntu /home/ubuntu/boombot
-            sudo chmod -R 755 /home/ubuntu/boombot
-          "
-
-          # Then continue with environment setup
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
             # Create .env file
             cat > /home/ubuntu/boombot/discord/.env <<EOF
@@ -67,13 +77,19 @@ jobs:
             chmod 600 /home/ubuntu/boombot/discord/.env
           "
 
-      - name: Deploy binary to VPS
+      - name: Deploy binary
         run: |
-          # Copy the binary to the server
-          scp -o StrictHostKeyChecking=no boombot ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/discord/
+          echo "Current local binary:"
+          ls -la boombot
           
-          # Update service configuration and restart
+          echo "Copying binary to server..."
+          scp -v -o StrictHostKeyChecking=no boombot ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/discord/
+          
+          echo "Verifying deployment and setting up service..."
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
+            echo 'Deployed binary:'
+            ls -la /home/ubuntu/boombot/discord/
+            
             # Update systemd service configuration
             sudo tee /etc/systemd/system/boombot.service <<EOF
             [Unit]
@@ -96,4 +112,7 @@ jobs:
             chmod +x /home/ubuntu/boombot/discord/boombot
             sudo systemctl daemon-reload
             sudo systemctl restart boombot
+            
+            echo 'Service status:'
+            sudo systemctl status boombot --no-pager
           "
