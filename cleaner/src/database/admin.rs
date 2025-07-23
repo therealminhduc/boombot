@@ -125,16 +125,16 @@ pub fn create_first_admin_if_needed(conn: &rusqlite::Connection) {
                             Ok(_) => {
                                 println!("First admin created from environment variables");
                             },
-                            Err(e) => eprintln!("Failed to insert first admin: {}", e),
+                            Err(e) => eprintln!("Failed to insert first admin: {e}"),
                         }
                     },
-                    Err(e) => eprintln!("Failed to hash admin password: {}", e),
+                    Err(e) => eprintln!("Failed to hash admin password: {e}"),
                 }
             } else {
                 eprintln!("No admin exists and ADMIN_USERNAME or ADMIN_PASSWORD not set. No admin created.");
             }
         },
         Ok(true) => {}, // At least one admin exists
-        Err(e) => eprintln!("Failed to check for existing admin: {}", e),
+        Err(e) => eprintln!("Failed to check for existing admin: {e}"),
     }
 }

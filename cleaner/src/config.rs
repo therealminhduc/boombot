@@ -65,7 +65,7 @@ pub fn load_registry_from_database(_db_path: &str) -> DbResult<HashMap<String, D
             // The actual status is logged inside migrate_from_yaml()
         },
         Err(e) => {
-            println!("Failed to migrate rules from YAML: {}", e);
+            println!("Failed to migrate rules from YAML: {e}");
         }
     }
     
@@ -81,7 +81,7 @@ pub fn load_registry_with_fallback(_db_path: &str) -> Result<HashMap<String, Dom
             Ok(registry)
         },
         Err(e) => {
-            println!("Failed to load from database: {}, falling back to YAML", e);
+            println!("Failed to load from database: {e}, falling back to YAML");
             load_registry_from_file()
         }
     }
