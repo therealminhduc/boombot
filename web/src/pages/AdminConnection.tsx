@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from '@tanstack/react-router';
+import { ArrowLeft } from 'lucide-react';
 
 export default function AdminConnection() {
     const { login, resetLogoutFlag } = useAuth();
@@ -44,12 +45,24 @@ export default function AdminConnection() {
         }
     };
 
+    const handleBack = () => {
+        // Always navigate to home page for consistency
+        navigate({ to: '/contribution' });
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
+                {/* Back Button */}
+                <div className="flex justify-start">
+                    <Button onClick={handleBack}>
+                        <ArrowLeft />
+                    </Button>
+                </div>
+
                 <div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Sign In
+                        Admin Sign In
                     </h2>
                 </div>
 

@@ -1,0 +1,130 @@
+name: Deploy Website
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+      
+      - name: Build frontend
+        working-directory: web
+        env:
+          VITE_API_URL: https://boombot.dev/api
+        run: npm run build
+      
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: web/dist
+
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Build backend
+        run: cargo build --release --package back
+      
+      - name: Upload backend binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-binary
+          path: target/release/back
+
+  deploy:
+    needs: [build-frontend, build-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+      
+      - name: Deploy to VPS
+        env:
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          HOST: "0.0.0.0"
+          PORT: "8000"
+          DATABASE_PATH: "/home/ubuntu/boombot/data/rules.db"
+        run: |
+          # Create directories
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
+            mkdir -p /home/ubuntu/boombot/{web-frontend,web-backend,data}
+          "
+          
+          # Deploy frontend
+          scp -o StrictHostKeyChecking=no -r artifacts/frontend-build/* ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/web-frontend/
+          
+          # Deploy backend
+          scp -o StrictHostKeyChecking=no artifacts/backend-binary/back ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/web-backend/
+          
+          # Update services
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
+            # Setup backend service
+            sudo tee /etc/systemd/system/boombot-backend.service <<EOF
+            [Unit]
+            Description=Boombot Backend API
+            After=network.target
+
+            [Service]
+            Type=simple
+            User=ubuntu
+            WorkingDirectory=/home/ubuntu/boombot/web-backend
+            Environment=ADMIN_USERNAME=${ADMIN_USERNAME}
+            Environment=ADMIN_PASSWORD=${ADMIN_PASSWORD}
+            Environment=HOST=0.0.0.0
+            Environment=PORT=8000
+            Environment=DATABASE_PATH=/home/ubuntu/boombot/data/rules.db
+            ExecStart=/home/ubuntu/boombot/web-backend/back
+            Restart=always
+
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+
+            # Make backend executable
+            chmod +x /home/ubuntu/boombot/web-backend/back
+            
+            # Setup frontend with PM2
+            cd /home/ubuntu/boombot/web-frontend
+            pm2 delete boombot-frontend || true
+            pm2 serve . 3000 --name boombot-frontend
+            
+            # Restart services
+            sudo systemctl daemon-reload
+            sudo systemctl restart boombot-backend
+            pm2 save
+            sudo systemctl restart nginx
+          "
+
+      - name: Purge Cloudflare Cache
+        uses: jakejarvis/cloudflare-purge-action@master
+        env:
+          CLOUDFLARE_ZONE: ${{ secrets.CLOUDFLARE_ZONE }}
+          CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }} 

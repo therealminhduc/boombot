@@ -6,7 +6,7 @@ import CreateAdminForm from "../components/CreateAdminForm";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "../contexts/AuthContext";
-import { ArrowLeft, Users, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Users, ChevronDown, ChevronUp, LogOut } from "lucide-react";
 
 export default function Admin() {
     const { logout } = useAuth();
@@ -37,7 +37,7 @@ export default function Admin() {
         <div className="p-8 max-w-[1200px] mx-auto flex flex-col items-center min-h-screen relative">
             <div className="absolute top-5 right-5">
                 <Button variant="outline" onClick={logout}>
-                    Logout
+                    <LogOut />
                 </Button>
             </div>
 
@@ -81,7 +81,7 @@ export default function Admin() {
                 </div>
             </div>
 
-            <Button asChild size="lg" variant="ghost">
+            <Button asChild size="lg" variant="ghost" className="mt-8">
                 <Link to="/" className="flex items-center gap-2">
                     <ArrowLeft className="w-6 h-6" /> Back to Home
                 </Link>
