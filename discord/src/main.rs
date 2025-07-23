@@ -134,7 +134,7 @@ fn handle_interaction(data: &serde_json::Value, http: &http::DiscordClient) -> R
     match cleaner::clean_url(url) {
         Ok(cleaned) => {
             info!("URL cleaned successfully, sending response");
-            let response = format!("🧹 Cleaned URL:\n{}", cleaned);
+            let response = format!("🧹 Cleaned URL:\n{cleaned}");
 
             // @mynkie:
             // spawn: Create a new asynchronous task
@@ -155,7 +155,7 @@ fn handle_interaction(data: &serde_json::Value, http: &http::DiscordClient) -> R
         }
         Err(e) => {
             error!("Failed to clean URL: {}", e);
-            let response = format!("❌ Error cleaning URL: {}", e);
+            let response = format!("❌ Error cleaning URL: {e}");
             tokio::spawn(async move {
                 let start = std::time::Instant::now();
                 let result = http.respond_to_interaction(&interaction_id, &token, &response).await;

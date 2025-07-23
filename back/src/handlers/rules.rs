@@ -20,7 +20,7 @@ pub async fn get_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<cl
             success: false,
             data: None,
             message: None,
-            error: Some(format!("Failed to fetch rules: {}", e)),
+            error: Some(format!("Failed to fetch rules: {e}")),
         }),
     }
 }
@@ -83,7 +83,7 @@ pub async fn submit_rule(
             success: false,
             data: None,
             message: None,
-            error: Some(format!("Failed to submit rule: {}", e)),
+            error: Some(format!("Failed to submit rule: {e}")),
         }),
     }
 }
@@ -105,7 +105,7 @@ pub async fn approve_rule(
             success: false,
             data: None,
             message: None,
-            error: Some(format!("Failed to approve rule: {}", e)),
+            error: Some(format!("Failed to approve rule: {e}")),
         }),
     }
 }
@@ -127,7 +127,7 @@ pub async fn reject_rule(
             success: false,
             data: None,
             message: None,
-            error: Some(format!("Failed to reject rule: {}", e)),
+            error: Some(format!("Failed to reject rule: {e}")),
         }),
     }
 }
@@ -147,7 +147,7 @@ pub async fn get_approved_rules(State(state): State<AppState>) -> Json<ApiRespon
             success: false,
             data: None,
             message: None,
-            error: Some(format!("Failed to fetch approved rules: {}", e)),
+            error: Some(format!("Failed to fetch approved rules: {e}")),
         }),
     }
 }
@@ -167,7 +167,7 @@ pub async fn get_pending_rules(State(state): State<AppState>) -> Json<ApiRespons
             success: false,
             data: None,
             message: None,
-            error: Some(format!("Failed to fetch pending rules: {}", e)),
+            error: Some(format!("Failed to fetch pending rules: {e}")),
         }),
     }
 }
