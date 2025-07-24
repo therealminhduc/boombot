@@ -6,7 +6,7 @@ import { ArrowRight, GitBranch } from "lucide-react";
 
 export default function Home() {
     return (
-        <div className="relative flex h-[50rem] w-full items-center justify-center bg-white dark:bg-black">
+        <div className="relative flex min-h-screen w-full items-center justify-center bg-white dark:bg-black">
             <div
                 className={cn(
                 "absolute inset-0",
@@ -52,7 +52,7 @@ export default function Home() {
                 </div>
             </div>
             <footer className="absolute bottom-4 w-full flex justify-center z-30">
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-xs">
                     Name inspired by Valorant. Not affiliated with Riot Games.                
                 </p>
             </footer>
