@@ -72,6 +72,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
             mkdir -p /home/ubuntu/boombot/{web-frontend,web-backend,data}
+            chown -R ubuntu:ubuntu /home/ubuntu/boombot
+            chmod -R 755 /home/ubuntu/boombot
           "
       
       - name: Deploy frontend files
@@ -80,6 +82,12 @@ jobs:
       
       - name: Deploy backend binary
         run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
+            # Stop backend service if running to release the binary file
+            sudo systemctl stop boombot-backend || true
+            # Remove old binary if it exists
+            rm -f /home/ubuntu/boombot/web-backend/back
+          "
           scp -o StrictHostKeyChecking=no artifacts/backend-binary/back ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/web-backend/
       
       - name: Install dependencies
