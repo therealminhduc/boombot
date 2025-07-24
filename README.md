@@ -7,13 +7,22 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust Version](https://img.shields.io/badge/rust-1.70+-blue.svg)](https://www.rust-lang.org)
 
-**Boombot** is a Discord bot that cleans URLs by removing tracking parameters. Built in Rust with a modular architecture.
+**Boombot** is a modular toolset for cleaning URLs by removing tracking parameters. It's available as a Discord bot, a command-line tool and a webapp.
 
 > _"Drop your messy links, Boombot will clean them with a boom !"_
 
+## ✨ What is Boombot ?
+
+Boombot helps you keep your links clean and private by removing tracking parameters (like `utm_*`, `igsh`, etc.) from URLs.
+
+You can use the bot in three ways:
+- **Discord Bot:** Clean links directly in your Discord server.
+- **Command-Line Tool:** Clean links from your terminal.
+- **Web App:** Contribute new cleaning rules and explore the showcase homepage.
+
 ## 🚀 Features
 
-- Removes tracking parameters from URLs (e.g., `utm_*`, `igsh`, etc.).
+- Removes tracking parameters from URLs.
 - Available as a Discord bot with `/clean` command.
 - Command-line interface for terminal usage.
 - Modular design with reusable components.
@@ -24,8 +33,8 @@
 ### Prerequisites
 
 - Rust 1.70 or higher.
-- Discord Bot Token.
-- Discord Application ID.
+- (For Discord) Discord Bot Token & Application ID.
+- (For Web) Node.js
 
 ### Building from Source
 
@@ -38,59 +47,82 @@ cd boombot
 cargo build --release
 ```
 
-### Discord Bot Setup
+## 🎮 Usage
 
-1. Create a new Discord application at [Discord Developer Portal](https://discord.com/developers/applications).
-2. Create a bot and get your token.
-3. Copy `.env.example` to `.env` and fill in your credentials:
+### 1. Start the Core Engine
+
+Before running the Discord bot or the CLI tool, you need to start the core engine:
+
+```bash
+cargo run --bin cleaner
+```
+
+### 2. Discord Bot
+
+1. Create a Discord application and bot at [Discord Developer Portal](https://discord.com/developers/applications).
+2. Copy `.env.example` to `.env` and fill in your credentials:
+
 ```env
 DISCORD_TOKEN=your_bot_token
 DISCORD_APPLICATION_ID=your_application_id
 ```
-
-## 🎮 Usage
-
-### Boombot on Discord
-
-1. Invite Boombot to your server.
-2. Use the `/clean` command with a URL:
+3. Run the bot:
+```bash
+cargo run --bin discord
 ```
-/clean url:https://example.com?utm_source=twitter&utm_medium=social
-```
+4. Invite Boombot to your server and use `/clean url:<your-url>`.
 
-### Command Line
+
+### 3. Command-Line Tool
 
 ```bash
-# Run the CLI tool
 cargo run --bin cli
-
-# Or use the binary directly
+# Or use the binary directly after building:
 ./target/release/cli
+```
+
+### 4. Webapp
+
+The webapp allows members to contribute new URL cleaning rules and serves as a showcase site with a homepage.
+
+#### Running the Web App (Development)
+
+```bash
+cd web
+npm install
+npm run dev
+```
+- Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+#### Building for Production
+
+```bash
+cd web
+npm run build
+```
+- The static files will be in `web/dist`.
+
+
+### 5. Running Backend and Core Engine
+
+You can run both the backend and the core engine together using a single command from the root of the repository:
+
+```bash
+cargo run
 ```
 
 ## 🏗️ Project Structure
 
-The project consists of three main components:
+- **cleaner/**: Core library for URL cleaning logic (Rust).
+- **cli/**: Command-line interface for cleaning URLs.
+- **discord/**: Discord bot integration.
+- **web/**: Web frontend for contributing rules and showcasing features.
+- **back/**: Backend API for the web app and admin panel.
 
-### 1. `cleaner` (Core Library)
-- URL cleaning functionality.
-- Trait-based interface (`UrlCleaner`).
-- Platform-specific cleaning strategies.
-- Reusable across different applications.
-
-### 2. `cli` (Command Line Interface)
-- Terminal-based URL cleaning.
-- Interactive command-line tool.
-- Example of cleaner library integration.
-
-### 3. `discord` (Boombot)
-- Discord integration.
-- Slash command handling.
-- Real-time URL cleaning in Discord servers.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Feel free to submit a Pull Request.
 
 1. Fork the repository.
 2. Create your feature branch (`git checkout -b feature/amazing-feature`).
@@ -100,7 +132,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License. See [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
