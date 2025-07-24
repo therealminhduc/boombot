@@ -1,0 +1,18 @@
+[Unit]
+Description=Boombot Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/boombot/web-backend
+Environment=ADMIN_USERNAME={{ADMIN_USERNAME}}
+Environment=HOST=0.0.0.0
+Environment=PORT=8000
+Environment=DATABASE_PATH={{DATABASE_PATH}}
+Environment=ADMIN_PASSWORD={{ADMIN_PASSWORD}}
+ExecStart=/home/ubuntu/boombot/web-backend/back
+Restart=always
+
+[Install]
+WantedBy=multi-user.target 

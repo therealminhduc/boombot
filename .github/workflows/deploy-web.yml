@@ -55,6 +55,9 @@ jobs:
     needs: [build-frontend, build-backend]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -65,62 +68,118 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
       
-      - name: Deploy to VPS
-        env:
-          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          HOST: "0.0.0.0"
-          PORT: "8000"
-          DATABASE_PATH: "/home/ubuntu/boombot/data/rules.db"
+      - name: Create directories
         run: |
-          # Create directories
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
             mkdir -p /home/ubuntu/boombot/{web-frontend,web-backend,data}
           "
-          
-          # Deploy frontend
+      
+      - name: Deploy frontend files
+        run: |
           scp -o StrictHostKeyChecking=no -r artifacts/frontend-build/* ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/web-frontend/
-          
-          # Deploy backend
+      
+      - name: Deploy backend binary
+        run: |
           scp -o StrictHostKeyChecking=no artifacts/backend-binary/back ubuntu@${{ secrets.VPS_IP }}:/home/ubuntu/boombot/web-backend/
-          
-          # Update services
+      
+      - name: Install dependencies
+        run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
-            # Setup backend service
-            sudo tee /etc/systemd/system/boombot-backend.service <<EOF
-            [Unit]
-            Description=Boombot Backend API
-            After=network.target
-
-            [Service]
-            Type=simple
-            User=ubuntu
-            WorkingDirectory=/home/ubuntu/boombot/web-backend
-            Environment=ADMIN_USERNAME=${ADMIN_USERNAME}
-            Environment=ADMIN_PASSWORD=${ADMIN_PASSWORD}
-            Environment=HOST=0.0.0.0
-            Environment=PORT=8000
-            Environment=DATABASE_PATH=/home/ubuntu/boombot/data/rules.db
-            ExecStart=/home/ubuntu/boombot/web-backend/back
-            Restart=always
-
-            [Install]
-            WantedBy=multi-user.target
-            EOF
-
+            # Install Node.js dependencies
+            which pm2 || npm install -g pm2
+            which serve || npm install -g serve
+            
+            # Install SSL certificate tools
+            which certbot || (sudo apt update && sudo apt install -y certbot python3-certbot-nginx)
+          "
+      
+      - name: Setup backend service
+        env:
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          DATABASE_PATH: "/home/ubuntu/boombot/data/rules.db"
+        run: |
+          # Copy template and substitute variables
+          cp .github/templates/systemd-backend.service /tmp/boombot-backend.service
+          sed -i "s/{{ADMIN_USERNAME}}/${ADMIN_USERNAME}/g" /tmp/boombot-backend.service
+          sed -i "s/{{ADMIN_PASSWORD}}/${ADMIN_PASSWORD}/g" /tmp/boombot-backend.service
+          sed -i "s|{{DATABASE_PATH}}|${DATABASE_PATH}|g" /tmp/boombot-backend.service
+          
+          # Deploy the service file
+          scp -o StrictHostKeyChecking=no /tmp/boombot-backend.service ubuntu@${{ secrets.VPS_IP }}:/tmp/
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
+            sudo mv /tmp/boombot-backend.service /etc/systemd/system/
+          "
+      
+      - name: Setup Nginx configuration
+        run: |
+          # Deploy the Nginx configuration template
+          scp -o StrictHostKeyChecking=no .github/templates/nginx-boombot.conf ubuntu@${{ secrets.VPS_IP }}:/tmp/
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
+            sudo mv /tmp/nginx-boombot.conf /etc/nginx/sites-available/boombot
+          "
+      
+      - name: Configure Nginx sites
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
+            # Enable boombot site
+            sudo ln -sf /etc/nginx/sites-available/boombot /etc/nginx/sites-enabled/
+            
+            # Remove default site
+            sudo rm -f /etc/nginx/sites-enabled/default
+            
+            # Test Nginx configuration
+            sudo nginx -t
+          "
+      
+      - name: Setup and start backend service
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
             # Make backend executable
             chmod +x /home/ubuntu/boombot/web-backend/back
             
-            # Setup frontend with PM2
-            cd /home/ubuntu/boombot/web-frontend
-            pm2 delete boombot-frontend || true
-            pm2 serve . 3000 --name boombot-frontend
-            
-            # Restart services
+            # Enable and start backend service
+            sudo systemctl enable boombot-backend
             sudo systemctl daemon-reload
             sudo systemctl restart boombot-backend
-            pm2 save
+            
+            # Check if service started successfully
+            sudo systemctl is-active boombot-backend
+          "
+      
+      - name: Setup and start frontend service
+        run: |
+          # Deploy the frontend startup script
+          scp -o StrictHostKeyChecking=no .github/templates/start-frontend.sh ubuntu@${{ secrets.VPS_IP }}:/tmp/
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
+            chmod +x /tmp/start-frontend.sh
+            /tmp/start-frontend.sh
+          "
+      
+      - name: Restart Nginx
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
             sudo systemctl restart nginx
+            sudo systemctl status nginx --no-pager
+          "
+      
+      - name: Verify deployment
+        run: |
+          # Wait for services to fully start
+          sleep 10
+          
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.VPS_IP }} "
+            echo 'Testing backend health...'
+            curl -f http://localhost:8000/health || (echo 'Backend health check failed' && exit 1)
+            
+            echo 'Testing frontend...'
+            curl -f http://localhost:3000 || (echo 'Frontend check failed' && exit 1)
+            
+            echo 'Checking service statuses...'
+            sudo systemctl is-active boombot-backend || (echo 'Backend service not active' && exit 1)
+            pm2 list | grep boombot-frontend | grep online || (echo 'Frontend service not online' && exit 1)
+            
+            echo 'All services are running successfully!'
           "
 
       - name: Purge Cloudflare Cache
