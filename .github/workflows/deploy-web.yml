@@ -105,7 +105,7 @@ jobs:
         env:
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          DATABASE_PATH: "/home/ubuntu/boombot/data/rules.db"
+          DATABASE_PATH: ${{ vars.DATABASE_PATH }}
         run: |
           # Copy template and substitute variables
           cp .github/templates/systemd-backend.service /tmp/boombot-backend.service

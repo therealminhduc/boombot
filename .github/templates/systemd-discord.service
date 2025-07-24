@@ -1,0 +1,16 @@
+[Unit]
+Description=Boombot Discord Service
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/boombot/discord
+Environment=DISCORD_TOKEN={{DISCORD_TOKEN}}
+Environment=DISCORD_APPLICATION_ID={{DISCORD_APPLICATION_ID}}
+Environment=DATABASE_PATH={{DATABASE_PATH}}
+ExecStart=/home/ubuntu/boombot/discord/boombot
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
