@@ -9,7 +9,8 @@ pub fn clean_url(input: &str) -> Result<String, url::ParseError> {
     let mut url = Url::parse(input)?;
     let host = url.host_str().unwrap_or("");
 
-    let registry = load_registry_with_fallback("../cleaner/rules.db")
+    let db_path = std::env::var("DATABASE_PATH").unwrap_or_else(|_| "../cleaner/rules.db".to_string());
+    let registry = load_registry_with_fallback(&db_path)
         .expect("Failed to load domain rules config file");
 
     let cleaner = get_cleaner_for_host_string(host, &registry);
