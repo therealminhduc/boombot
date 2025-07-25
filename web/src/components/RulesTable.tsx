@@ -3,6 +3,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Check, X } from 'lucide-react';
+import ActionModal from './ActionModal';
 
 interface RulesTableProps {
     title: string;
@@ -100,7 +101,8 @@ export default function RulesTable({ title, rules, type, onAction, isAdmin = fal
 
                                 {type === 'approved' && isAdmin && (
                                     <TableCell>
-                                        <Button size="sm" variant="destructive">Delete</Button>
+                                        {/* <Button size="sm" variant="destructive">Delete</Button> */}
+                                        <ActionModal />
                                     </TableCell>
                                 )}
                             </TableRow>
