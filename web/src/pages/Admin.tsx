@@ -77,6 +77,7 @@ export default function Admin() {
                         title="Approved Rules" 
                         rules={approvedRules} 
                         type="approved"
+                        isAdmin={true}
                     />
                 </div>
             </div>

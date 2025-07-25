@@ -2,6 +2,7 @@ import { RulesService, type DomainRule } from '../services';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Check, X } from 'lucide-react';
 
 interface RulesTableProps {
     title: string;
@@ -35,6 +36,7 @@ export default function RulesTable({ title, rules, type, onAction, isAdmin = fal
     return (
         <section>
             <h2 className="text-2xl font-semibold mb-4">{title}</h2>
+
             <div className="border rounded-lg overflow-hidden">
                 <Table>
                     <TableHeader>
@@ -47,12 +49,13 @@ export default function RulesTable({ title, rules, type, onAction, isAdmin = fal
                             <TableHead>Keys</TableHead>
                             <TableHead>Starts With</TableHead>
                             
-                            {type === 'pending' && isAdmin && 
-                                <TableHead>Actions</TableHead>
-                            }
                             {type === 'approved' && 
                                 <TableHead>Contributor</TableHead>
                             }
+
+                            {isAdmin && (
+                                <TableHead>Actions</TableHead>
+                            )}
                         </TableRow>
                     </TableHeader>
 
@@ -78,20 +81,27 @@ export default function RulesTable({ title, rules, type, onAction, isAdmin = fal
                                                 size="sm"
                                                 className="bg-green-600 hover:bg-green-700"
                                             >
-                                                Approve
+                                                <Check />
                                             </Button>
+                                            
                                             <Button
                                                 onClick={() => handleReject(rule.id)}
                                                 size="sm"
-                                                variant="destructive"
+                                                variant="secondary"
                                             >
-                                                Reject
+                                                <X />
                                             </Button>
                                         </div>
                                     </TableCell>
                                 )}
                                 {type === 'approved' && (
                                     <TableCell>{rule.contributors || 'Anonymous'}</TableCell>
+                                )}
+
+                                {type === 'approved' && isAdmin && (
+                                    <TableCell>
+                                        <Button size="sm" variant="destructive">Delete</Button>
+                                    </TableCell>
                                 )}
                             </TableRow>
                         ))}
