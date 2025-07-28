@@ -6,6 +6,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust Version](https://img.shields.io/badge/rust-1.70+-blue.svg)](https://www.rust-lang.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white&style=flat)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-20232a?logo=react&logoColor=61dafb&style=flat)](https://react.dev/)
 
 **Boombot** is a modular toolset for cleaning URLs by removing tracking parameters. It's available as a Discord bot, a command-line tool and a webapp.
 

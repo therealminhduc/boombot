@@ -1,9 +1,16 @@
 name: Deploy Website
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch:
+  push:
+    paths:
+      - 'web/**'
+      - 'back/**'
+      - '.github/workflows/deploy-web.yml'
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'back/**'
+      - '.github/workflows/deploy-web.yml'
 
 jobs:
   build-frontend:

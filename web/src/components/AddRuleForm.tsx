@@ -1,103 +1,149 @@
-import { useState } from "react";
-import { RulesService, type SubmissionRequest } from "../services";
+import { RulesService } from "../services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type SubmissionFormData, submissionSchema } from "../schemas/forms/rules";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 interface AddRuleFormProps {
     onSuccess: () => void;
 }
 
 export default function AddRuleForm({ onSuccess }: AddRuleFormProps) {
-    const [formData, setFormData] = useState({
-        contributor: "",
-        domain: "",
-        keys: "",
-        startsWith: "",
+
+    const { 
+        register,
+        handleSubmit,
+        reset,
+        formState: { isSubmitting, errors },
+    } = useForm<SubmissionFormData>({
+        resolver: zodResolver(submissionSchema),
     });
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-
+    const onSubmit = async (data: SubmissionFormData) => {
         try {
-            const keys = formData.keys.split(',').map(key => key.trim()).filter(key => key.length > 0);
-            const startsWith = formData.startsWith ? formData.startsWith.split(',').map(s => s.trim()).filter(s => s.length > 0) : undefined;
+            const keys = data.keys
+                .split(',')
+                .map(key => key.trim())
+                .filter(Boolean);
             
-            const request: SubmissionRequest = {
-                domain: formData.domain,
-                keys: keys,
+            const startsWith = data.startsWith
+                ? data.startsWith
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean)
+                : undefined;
+
+            await RulesService.submitRule({
+                domain: data.domain,
+                keys,
                 starts_with: startsWith,
-                contributor: formData.contributor,
-            };
-
-            await RulesService.submitRule(request);
-
-            // Reset form
-            setFormData({
-                contributor: "",
-                domain: "",
-                keys: "",
-                startsWith: "",
+                contributor: data.contributor,
             });
 
+            reset();
+
             onSuccess();
+            toast.success("Rule submitted successfully");
+
         } catch (error) {
             console.error("Submission error:", error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            
-            toast.error(`Failed to submit rule: ${errorMessage}`);
-        } finally {
-            setIsSubmitting(false);
+            toast.error("Failed to submit rule");
         }
     }
 
     return (
-        <section style={{ marginBottom: '2rem' }}>
+        <div className=" space-y-6">
             <h2 className="text-2xl font-semibold mb-4">Add a new rule</h2>
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                <Input 
-                    type="text" 
-                    placeholder="Your name or email" 
-                    value={formData.contributor}
-                    onChange={(e) => setFormData(prev => ({ ...prev, contributor: e.target.value }))}
-                    required
-                />
 
-                <Input
-                    type="text"
-                    placeholder="e.g. twitter.com"
-                    value={formData.domain}
-                    onChange={(e) => setFormData(prev => ({ ...prev, domain: e.target.value }))}
-                    required
-                />
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">Rule Information</CardTitle>
+                    <CardDescription>Provide the details of the rule you want to submit</CardDescription>
+                </CardHeader>
 
-                <Input
-                    type="text"
-                    placeholder="e.g. utm_source, fbclid"
-                    value={formData.keys}
-                    onChange={(e) => setFormData(prev => ({ ...prev, keys: e.target.value }))}
-                />
+                <CardContent>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        <div className="spacy-y-2">
+                            <Label htmlFor="contributor" className="text-sm font-medium">
+                                Your name or email *
+                            </Label>
 
-                <Input
-                    type="text"
-                    placeholder="e.g. utm_, ref_"
-                    value={formData.startsWith}
-                    onChange={(e) => setFormData(prev => ({ ...prev, startsWith: e.target.value }))}
-                />
-            </div>
+                            <Input 
+                                id="contributor"
+                                type="text"
+                                placeholder="e.g. john.doe@example.com or John Doe"
+                                className={errors.contributor ? "border-red-500" : ""}
+                                {...register("contributor")}
+                            />
+                            {errors.contributor && (
+                                <p className="text-red-500 text-sm">{errors.contributor.message}</p>
+                            )}
+                        </div>
 
-            <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-blue-500 text-white border-none rounded cursor-pointer disabled:cursor-not-allowed hover:bg-blue-600"
-            >
-                {isSubmitting ? 'Submitting...' : 'Submit Rule'}
-            </Button>
-            </form>
-        </section>
-    )
+                        <Separator />
+
+                        <div className="space-y-2">
+                            <Label htmlFor="domain" className="text-sm font-medium">Domain *</Label>
+
+                            <Input
+                                id="domain"
+                                type="text"
+                                placeholder="e.g. twitter.com"
+                                className={errors.domain ? "border-red-500" : ""}
+                                {...register("domain")}
+                            />
+                            {errors.domain && (
+                                <p className="text-red-500 text-sm">{errors.domain.message}</p>
+                            )}
+                        </div>
+
+                        <Separator />
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="keys" className="text-sm font-medium">
+                                Parameters to Remove *
+                                </Label>
+                                <Input
+                                id="keys"
+                                type="text"
+                                placeholder="e.g. utm_source, fbclid, ref"
+                                className={errors.keys ? "border-red-500" : ""}
+                                {...register("keys")}
+                                />
+                                {errors.keys && (
+                                    <p className="text-red-500 text-sm">{errors.keys.message}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="startsWith" className="text-sm font-medium">
+                                Parameters Starting With (Optional)
+                                </Label>
+                                <Input
+                                id="startsWith"
+                                type="text"
+                                placeholder="e.g. utm_, ref_, fb_"
+                                {...register("startsWith")}
+                                />
+                            </div>
+                        </div>
+
+                        <Button 
+                            type="submit" 
+                            disabled={isSubmitting}
+                            className="w-full"
+                        >
+                            {isSubmitting ? 'Submitting...' : 'Submit Rule'}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+    );
 }
