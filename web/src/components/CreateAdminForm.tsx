@@ -1,50 +1,34 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AdminService, type CreateAdminRequest } from '../services';
 import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { type AdminSchema, adminSchema } from '../schemas/forms/auth';
 
 export default function CreateAdminForm() {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { isSubmitting, errors },
+    } = useForm<AdminSchema>({
+        resolver: zodResolver(adminSchema),
+    });
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        
-        if (!username.trim() || !password.trim()) {
-            toast.error('Username and password are required');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            toast.error('Passwords do not match');
-            return;
-        }
-
-        if (password.length < 6) {
-            toast.error('Password must be at least 6 characters long');
-            return;
-        }
-
-        setIsLoading(true);
-
+    const onSubmit = async (data: AdminSchema) => {
         try {
-            const request: CreateAdminRequest = { username, password };
+            const request: CreateAdminRequest = { 
+                username: data.username, 
+                password: data.password 
+            };
             const result = await AdminService.createAdmin(request);
             toast.success(result);
-            
-            // Reset form after successful creation
-            setUsername('');
-            setPassword('');
-            setConfirmPassword('');
+            reset();
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An error occurred';
             toast.error(errorMessage);
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -52,55 +36,55 @@ export default function CreateAdminForm() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
             <h3 className="text-lg font-semibold mb-4">Create New Admin</h3>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid w-full items-center gap-2">
                     <Label htmlFor="new-username">Username</Label>
                     <Input
                         id="new-username"
-                        name="username"
                         type="text"
-                        required
-                        value={username}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                        {...register("username")}
                         placeholder="Enter username"
-                        disabled={isLoading}
+                        disabled={isSubmitting}
                     />
+                    {errors.username && (
+                        <p className="text-red-500 text-sm">{errors.username.message}</p>
+                    )}
                 </div>
 
                 <div className="grid w-full items-center gap-2">
                     <Label htmlFor="new-password">Password</Label>
                     <Input
                         id="new-password"
-                        name="password"
                         type="password"
-                        required
-                        value={password}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                        {...register("password")}
                         placeholder="Enter password"
-                        disabled={isLoading}
+                        disabled={isSubmitting}
                     />
+                    {errors.password && (
+                        <p className="text-red-500 text-sm">{errors.password.message}</p>
+                    )}
                 </div>
 
                 <div className="grid w-full items-center gap-2">
                     <Label htmlFor="new-confirm-password">Confirm Password</Label>
                     <Input
                         id="new-confirm-password"
-                        name="confirmPassword"
                         type="password"
-                        required
-                        value={confirmPassword}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
+                        {...register("confirmPassword")}
                         placeholder="Confirm password"
-                        disabled={isLoading}
+                        disabled={isSubmitting}
                     />
+                    {errors.confirmPassword && (
+                        <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>
+                    )}
                 </div>
 
                 <Button
                     type="submit"
                     className="w-full"
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                 >
-                    {isLoading ? 'Creating...' : 'Create Admin'}
+                    {isSubmitting ? 'Creating...' : 'Create Admin'}
                 </Button>
             </form>
 

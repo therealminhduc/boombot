@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { AdminService } from '../services';
@@ -7,41 +7,35 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { type LoginSchema, loginSchema } from '../schemas/forms/auth';
 
 export default function AdminConnection() {
     const { login, resetLogoutFlag } = useAuth();
     const navigate = useNavigate();
-
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     
+    const {
+        register,
+        handleSubmit,
+        formState: { isSubmitting, errors },
+    } = useForm<LoginSchema>({
+        resolver: zodResolver(loginSchema),
+    });
+
     useEffect(() => {
         resetLogoutFlag();
     }, [resetLogoutFlag]);
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        
-        if (!username.trim() || !password.trim()) {
-            toast.error('Username and password are required');
-            return;
-        }
-
-        setIsLoading(true);
-
+    const onSubmit = async (data: LoginSchema) => {
         try {
-            const request = { username, password };
-            const token = await AdminService.loginAdmin(request);
-            
+            const token = await AdminService.loginAdmin(data);
             login(token);
             toast.success('Login successful');
             navigate({ to: '/admin' });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An error occurred';
             toast.error(errorMessage);
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -51,9 +45,9 @@ export default function AdminConnection() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
-                {/* Back Button */}
+                
                 <div className="flex justify-start">
                     <Button onClick={handleBack}>
                         <ArrowLeft />
@@ -61,39 +55,39 @@ export default function AdminConnection() {
                 </div>
 
                 <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    <h2 className="mt-6 text-center text-3xl font-extrabold">
                         Admin Sign In
                     </h2>
                 </div>
 
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
                     <div className="space-y-4">
                         <div className="grid w-full items-center gap-3">
                             <Label htmlFor="username">Username</Label>
                             <Input
                                 id="username"
-                                name="username"
                                 type="text"
-                                required
-                                value={username}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                                {...register("username")}
                                 placeholder="Enter username"
-                                disabled={isLoading}
+                                disabled={isSubmitting}
                             />
+                            {errors.username && (
+                                <p className="text-red-500 text-sm">{errors.username.message}</p>
+                            )}
                         </div>
 
                         <div className="grid w-full items-center gap-3">
                             <Label htmlFor="password">Password</Label>
                             <Input
                                 id="password"
-                                name="password"
                                 type="password"
-                                required
-                                value={password}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                                {...register("password")}
                                 placeholder="Enter password"
-                                disabled={isLoading}
+                                disabled={isSubmitting}
                             />
+                            {errors.password && (
+                                <p className="text-red-500 text-sm">{errors.password.message}</p>
+                            )}
                         </div>
                     </div>
 
@@ -101,9 +95,9 @@ export default function AdminConnection() {
                         <Button
                             type="submit"
                             className="w-full"
-                            disabled={isLoading}
+                            disabled={isSubmitting}
                         >
-                            {isLoading ? 'Signing in...' : 'Sign in'}
+                            {isSubmitting ? 'Signing in...' : 'Sign in'}
                         </Button>
                     </div>
                 </form>
