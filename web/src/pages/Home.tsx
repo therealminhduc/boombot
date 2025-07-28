@@ -3,10 +3,11 @@ import boomBotLogo from "../assets/boom-bot.png";
 import { Button } from "@/components/ui/button";
 import { cn } from "../lib/utils";
 import { ArrowRight, GitBranch } from "lucide-react";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export default function Home() {
     return (
-        <div className="relative flex min-h-screen w-full items-center justify-center bg-white dark:bg-black">
+        <div className="relative flex min-h-screen w-full items-center justify-center bg-white dark:bg-background">
             <div
                 className={cn(
                 "absolute inset-0",
@@ -16,6 +17,11 @@ export default function Home() {
                 )}
             />
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] dark:bg-black"></div>
+            
+            <div className="absolute top-4 right-4 z-30">
+                <ModeToggle />
+            </div>
+            
             <div className="relative z-20 flex flex-col items-center justify-center p-8 text-center">
                 <div className="flex flex-col items-center gap-8 max-w-2xl">
                     <img 
